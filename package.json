@@ -1,0 +1,14 @@
+{
+  "name": "weekly-goals",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Weekly planning and tracking system",
+  "scripts": {
+    "build": "pnpm --filter api build",
+    "start:api": "pnpm --filter api start:dev",
+    "lint": "pnpm --filter api lint",
+    "test": "pnpm --filter api test",
+    "test:e2e": "pnpm --filter api test:e2e"
+  },
+  "packageManager": "pnpm@12.3.4"
+}
