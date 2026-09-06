@@ -150,4 +150,100 @@ describe('Categories (e2e)', () => {
       expect(responseInactives.body[0].name).toBe('Arquivada');
     });
   });
+
+  describe('GET /api/categories/:id', () => {
+    it('deve retornar uma categoria existente por id', async () => {
+      const created = await prisma.category.create({
+        data: { name: 'Finanças', position: 3 },
+      });
+
+      const response = await request(app.getHttpServer())
+        .get(`/api/categories/${created.id}`)
+        .expect(200);
+
+      expect(response.body.id).toBe(created.id);
+      expect(response.body.name).toBe('Finanças');
+    });
+
+    it('deve retornar 404 quando o id nao for encontrado', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/categories/00000000-0000-0000-0000-000000000000')
+        .expect(404);
+
+      expect(response.body.message).toContain('não encontrada');
+    });
+  });
+
+  describe('PATCH /api/categories/:id', () => {
+    it('deve atualizar categoria com sucesso aplicando trim', async () => {
+      const created = await prisma.category.create({
+        data: { name: 'Trabalho', description: 'Empresa antiga', position: 1 },
+      });
+
+      const response = await request(app.getHttpServer())
+        .patch(`/api/categories/${created.id}`)
+        .send({
+          name: '  Carreira & Negócios  ',
+          description: '  Novos projetos  ',
+          position: 5,
+        })
+        .expect(200);
+
+      expect(response.body.name).toBe('Carreira & Negócios');
+      expect(response.body.description).toBe('Novos projetos');
+      expect(response.body.position).toBe(5);
+
+      const inDb = await prisma.category.findUnique({
+        where: { id: created.id },
+      });
+      expect(inDb?.name).toBe('Carreira & Negócios');
+    });
+
+    it('deve retornar 400 se tentar atualizar nome para string vazia ou apenas espacos', async () => {
+      const created = await prisma.category.create({
+        data: { name: 'Saúde' },
+      });
+
+      await request(app.getHttpServer())
+        .patch(`/api/categories/${created.id}`)
+        .send({ name: '   ' })
+        .expect(400);
+    });
+
+    it('deve retornar 404 ao atualizar categoria inexistente', async () => {
+      await request(app.getHttpServer())
+        .patch('/api/categories/00000000-0000-0000-0000-000000000000')
+        .send({ name: 'Novo Nome' })
+        .expect(404);
+    });
+  });
+
+  describe('DELETE /api/categories/:id', () => {
+    it('deve realizar soft delete (isActive=false) e preservar registro no banco', async () => {
+      const created = await prisma.category.create({
+        data: { name: 'Hobbies', position: 4, isActive: true },
+      });
+
+      const response = await request(app.getHttpServer())
+        .delete(`/api/categories/${created.id}`)
+        .expect(200);
+
+      expect(response.body.id).toBe(created.id);
+      expect(response.body.isActive).toBe(false);
+
+      // Garante que o registro NÃO foi removido fisicamente do banco
+      const inDb = await prisma.category.findUnique({
+        where: { id: created.id },
+      });
+      expect(inDb).not.toBeNull();
+      expect(inDb?.id).toBe(created.id);
+      expect(inDb?.isActive).toBe(false);
+    });
+
+    it('deve retornar 404 ao tentar arquivar categoria inexistente', async () => {
+      await request(app.getHttpServer())
+        .delete('/api/categories/00000000-0000-0000-0000-000000000000')
+        .expect(404);
+    });
+  });
 });

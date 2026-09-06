@@ -17,6 +17,8 @@ describe('CategoriesController', () => {
             create: vi.fn(),
             findAll: vi.fn(),
             findById: vi.fn(),
+            update: vi.fn(),
+            archive: vi.fn(),
           },
         },
       ],
@@ -69,6 +71,64 @@ describe('CategoriesController', () => {
     const result = await controller.findAll(query);
 
     expect(service.findAll).toHaveBeenCalledWith(query);
+    expect(result).toEqual(expected);
+  });
+
+  it('deve delegar a busca de categoria por id para o CategoriesService', async () => {
+    const expected = {
+      id: 'cat-1',
+      name: 'Estudos',
+      description: null,
+      position: 0,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.spyOn(service, 'findById').mockResolvedValue(expected);
+
+    const result = await controller.findById('cat-1');
+
+    expect(service.findById).toHaveBeenCalledWith('cat-1');
+    expect(result).toEqual(expected);
+  });
+
+  it('deve delegar a atualizacao de categoria para o CategoriesService', async () => {
+    const dto = { name: 'Finanças' };
+    const expected = {
+      id: 'cat-1',
+      name: 'Finanças',
+      description: null,
+      position: 0,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.spyOn(service, 'update').mockResolvedValue(expected);
+
+    const result = await controller.update('cat-1', dto);
+
+    expect(service.update).toHaveBeenCalledWith('cat-1', dto);
+    expect(result).toEqual(expected);
+  });
+
+  it('deve delegar o arquivamento de categoria para o CategoriesService', async () => {
+    const expected = {
+      id: 'cat-1',
+      name: 'Projetos Antigos',
+      description: null,
+      position: 0,
+      isActive: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.spyOn(service, 'archive').mockResolvedValue(expected);
+
+    const result = await controller.archive('cat-1');
+
+    expect(service.archive).toHaveBeenCalledWith('cat-1');
     expect(result).toEqual(expected);
   });
 });

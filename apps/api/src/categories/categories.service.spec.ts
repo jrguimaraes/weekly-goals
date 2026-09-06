@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -18,6 +19,7 @@ describe('CategoriesService', () => {
               create: vi.fn(),
               findMany: vi.fn(),
               findUnique: vi.fn(),
+              update: vi.fn(),
             },
           },
         },
@@ -96,7 +98,7 @@ describe('CategoriesService', () => {
     });
   });
 
-  it('deve buscar categoria por id', async () => {
+  it('deve buscar categoria por id com sucesso', async () => {
     const mockCategory = {
       id: 'cat-1',
       name: 'Estudos',
@@ -115,5 +117,92 @@ describe('CategoriesService', () => {
       where: { id: 'cat-1' },
     });
     expect(result).toEqual(mockCategory);
+  });
+
+  it('deve lancar NotFoundException se a categoria nao existir no findById', async () => {
+    vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(null);
+
+    await expect(service.findById('inexistente')).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('deve atualizar categoria com sucesso aplicando trim', async () => {
+    const existing = {
+      id: 'cat-1',
+      name: 'Trabalho',
+      description: null,
+      position: 0,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const updated = {
+      ...existing,
+      name: 'Carreira',
+      position: 2,
+    };
+
+    vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(existing);
+    vi.spyOn(prismaService.category, 'update').mockResolvedValue(updated);
+
+    const result = await service.update('cat-1', {
+      name: '  Carreira  ',
+      position: 2,
+    });
+
+    expect(prismaService.category.update).toHaveBeenCalledWith({
+      where: { id: 'cat-1' },
+      data: {
+        name: 'Carreira',
+        position: 2,
+      },
+    });
+    expect(result).toEqual(updated);
+  });
+
+  it('deve lancar NotFoundException ao tentar atualizar categoria inexistente', async () => {
+    vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(null);
+
+    await expect(
+      service.update('inexistente', { name: 'Novo Nome' }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('deve arquivar categoria via soft delete alterando isActive para false', async () => {
+    const existing = {
+      id: 'cat-1',
+      name: 'Trabalho',
+      description: null,
+      position: 0,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const archived = {
+      ...existing,
+      isActive: false,
+    };
+
+    vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(existing);
+    vi.spyOn(prismaService.category, 'update').mockResolvedValue(archived);
+
+    const result = await service.archive('cat-1');
+
+    expect(prismaService.category.update).toHaveBeenCalledWith({
+      where: { id: 'cat-1' },
+      data: { isActive: false },
+    });
+    expect(result.isActive).toBe(false);
+  });
+
+  it('deve lancar NotFoundException ao tentar arquivar categoria inexistente', async () => {
+    vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(null);
+
+    await expect(service.archive('inexistente')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 });
