@@ -6,6 +6,7 @@ import { validateEnv } from './config/env.validation.js';
 import { CategoriesModule } from './categories/categories.module.js';
 import { HealthModule } from './health/health.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { WeeksModule } from './weeks/weeks.module.js';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     PrismaModule,
     HealthModule,
     CategoriesModule,
+    WeeksModule,
   ],
   controllers: [AppController],
   providers: [AppService],
