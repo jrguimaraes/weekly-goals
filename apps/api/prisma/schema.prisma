@@ -15,6 +15,7 @@ model Category {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  goals       Goal[]
 
   @@map("categories")
 }
@@ -33,7 +34,48 @@ model Week {
   closedAt  DateTime?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  goals     Goal[]
 
   @@map("weeks")
+}
+
+enum GoalType {
+  BINARY
+  QUANTITY
+}
+
+enum GoalPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum GoalStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Goal {
+  id           String       @id @default(uuid())
+  weekId       String
+  categoryId   String
+  title        String
+  description  String?
+  type         GoalType
+  priority     GoalPriority @default(MEDIUM)
+  targetValue  Float
+  currentValue Float        @default(0)
+  status       GoalStatus   @default(PENDING)
+  completedAt  DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  week     Week     @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([weekId])
+  @@index([categoryId])
+  @@map("goals")
 }
 
