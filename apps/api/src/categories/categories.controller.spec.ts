@@ -1,10 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CategoriesController } from './categories.controller.js';
 import { CategoriesService } from './categories.service.js';
 
 describe('CategoriesController', () => {
   let controller: CategoriesController;
+  let service: CategoriesService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -22,9 +23,52 @@ describe('CategoriesController', () => {
     }).compile();
 
     controller = module.get<CategoriesController>(CategoriesController);
+    service = module.get<CategoriesService>(CategoriesService);
   });
 
   it('deve estar definido', () => {
     expect(controller).toBeDefined();
+  });
+
+  it('deve delegar a criacao de categoria para o CategoriesService', async () => {
+    const dto = { name: 'Trabalho', description: 'Metas da empresa', position: 1 };
+    const expected = {
+      id: 'cat-1',
+      name: 'Trabalho',
+      description: 'Metas da empresa',
+      position: 1,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.spyOn(service, 'create').mockResolvedValue(expected);
+
+    const result = await controller.create(dto);
+
+    expect(service.create).toHaveBeenCalledWith(dto);
+    expect(result).toEqual(expected);
+  });
+
+  it('deve delegar a listagem de categorias para o CategoriesService', async () => {
+    const query = { isActive: true };
+    const expected = [
+      {
+        id: 'cat-1',
+        name: 'Saúde',
+        description: null,
+        position: 0,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    vi.spyOn(service, 'findAll').mockResolvedValue(expected);
+
+    const result = await controller.findAll(query);
+
+    expect(service.findAll).toHaveBeenCalledWith(query);
+    expect(result).toEqual(expected);
   });
 });

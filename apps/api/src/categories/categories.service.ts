@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Category } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateCategoryDto } from './dto/create-category.dto.js';
+import { ListCategoriesQueryDto } from './dto/list-categories-query.dto.js';
 
 @Injectable()
 export class CategoriesService {
@@ -10,16 +11,20 @@ export class CategoriesService {
   async create(data: CreateCategoryDto): Promise<Category> {
     return this.prisma.category.create({
       data: {
-        name: data.name,
-        description: data.description,
+        name: data.name.trim(),
+        description: data.description ? data.description.trim() : null,
         position: data.position ?? 0,
       },
     });
   }
 
-  async findAll(): Promise<Category[]> {
+  async findAll(query?: ListCategoriesQueryDto): Promise<Category[]> {
+    const where =
+      query?.isActive !== undefined ? { isActive: query.isActive } : {};
+
     return this.prisma.category.findMany({
-      orderBy: { position: 'asc' },
+      where,
+      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
     });
   }
 

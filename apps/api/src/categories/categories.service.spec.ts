@@ -32,7 +32,7 @@ describe('CategoriesService', () => {
     expect(service).toBeDefined();
   });
 
-  it('deve criar uma categoria com sucesso', async () => {
+  it('deve criar uma categoria com sucesso aplicando trim nos campos', async () => {
     const mockCategory = {
       id: 'cat-1',
       name: 'Trabalho',
@@ -46,8 +46,8 @@ describe('CategoriesService', () => {
     vi.spyOn(prismaService.category, 'create').mockResolvedValue(mockCategory);
 
     const result = await service.create({
-      name: 'Trabalho',
-      description: 'Metas profissionais',
+      name: '  Trabalho  ',
+      description: '  Metas profissionais  ',
       position: 1,
     });
 
@@ -61,7 +61,7 @@ describe('CategoriesService', () => {
     expect(result).toEqual(mockCategory);
   });
 
-  it('deve listar categorias ordenadas por posicao', async () => {
+  it('deve listar categorias com ordenacao deterministica', async () => {
     const mockCategories = [
       {
         id: 'cat-1',
@@ -79,9 +79,21 @@ describe('CategoriesService', () => {
     const result = await service.findAll();
 
     expect(prismaService.category.findMany).toHaveBeenCalledWith({
-      orderBy: { position: 'asc' },
+      where: {},
+      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
     });
     expect(result).toEqual(mockCategories);
+  });
+
+  it('deve listar categorias filtrando por isActive quando informado', async () => {
+    vi.spyOn(prismaService.category, 'findMany').mockResolvedValue([]);
+
+    await service.findAll({ isActive: true });
+
+    expect(prismaService.category.findMany).toHaveBeenCalledWith({
+      where: { isActive: true },
+      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+    });
   });
 
   it('deve buscar categoria por id', async () => {
