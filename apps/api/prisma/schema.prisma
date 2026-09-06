@@ -6,3 +6,15 @@ datasource db {
 generator client {
   provider = "prisma-client-js"
 }
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  position    Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("categories")
+}

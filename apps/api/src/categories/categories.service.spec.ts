@@ -1,0 +1,107 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { CategoriesService } from './categories.service.js';
+
+describe('CategoriesService', () => {
+  let service: CategoriesService;
+  let prismaService: PrismaService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        CategoriesService,
+        {
+          provide: PrismaService,
+          useValue: {
+            category: {
+              create: vi.fn(),
+              findMany: vi.fn(),
+              findUnique: vi.fn(),
+            },
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<CategoriesService>(CategoriesService);
+    prismaService = module.get<PrismaService>(PrismaService);
+  });
+
+  it('deve estar definido', () => {
+    expect(service).toBeDefined();
+  });
+
+  it('deve criar uma categoria com sucesso', async () => {
+    const mockCategory = {
+      id: 'cat-1',
+      name: 'Trabalho',
+      description: 'Metas profissionais',
+      position: 1,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.spyOn(prismaService.category, 'create').mockResolvedValue(mockCategory);
+
+    const result = await service.create({
+      name: 'Trabalho',
+      description: 'Metas profissionais',
+      position: 1,
+    });
+
+    expect(prismaService.category.create).toHaveBeenCalledWith({
+      data: {
+        name: 'Trabalho',
+        description: 'Metas profissionais',
+        position: 1,
+      },
+    });
+    expect(result).toEqual(mockCategory);
+  });
+
+  it('deve listar categorias ordenadas por posicao', async () => {
+    const mockCategories = [
+      {
+        id: 'cat-1',
+        name: 'Saúde',
+        description: null,
+        position: 0,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    vi.spyOn(prismaService.category, 'findMany').mockResolvedValue(mockCategories);
+
+    const result = await service.findAll();
+
+    expect(prismaService.category.findMany).toHaveBeenCalledWith({
+      orderBy: { position: 'asc' },
+    });
+    expect(result).toEqual(mockCategories);
+  });
+
+  it('deve buscar categoria por id', async () => {
+    const mockCategory = {
+      id: 'cat-1',
+      name: 'Estudos',
+      description: null,
+      position: 0,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(mockCategory);
+
+    const result = await service.findById('cat-1');
+
+    expect(prismaService.category.findUnique).toHaveBeenCalledWith({
+      where: { id: 'cat-1' },
+    });
+    expect(result).toEqual(mockCategory);
+  });
+});
