@@ -9,7 +9,8 @@ describe('AppController (e2e)', () => {
 
   beforeEach(async () => {
     process.env.DATABASE_URL =
-      'postgresql://postgres:postgres@localhost:5432/weekly_goals_test?schema=public';
+      process.env.DATABASE_URL ??
+      'postgresql://postgres:postgres@localhost:5432/weekly_goals?schema=public';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
