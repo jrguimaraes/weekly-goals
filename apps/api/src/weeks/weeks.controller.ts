@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { Week } from '@prisma/client';
 import { CreateWeekDto } from './dto/create-week.dto.js';
 import { ListWeeksQueryDto } from './dto/list-weeks-query.dto.js';
@@ -11,6 +20,12 @@ export class WeeksController {
   @Post()
   async create(@Body() dto: CreateWeekDto): Promise<Week> {
     return this.weeksService.create(dto);
+  }
+
+  @Post(':id/activate')
+  @HttpCode(HttpStatus.OK)
+  async activate(@Param('id') id: string): Promise<Week> {
+    return this.weeksService.activate(id);
   }
 
   @Get()

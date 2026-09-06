@@ -18,6 +18,7 @@ describe('WeeksController', () => {
             create: vi.fn(),
             findAll: vi.fn(),
             findById: vi.fn(),
+            activate: vi.fn(),
           },
         },
       ],
@@ -94,6 +95,27 @@ describe('WeeksController', () => {
       const result = await controller.findById('week-1');
 
       expect(service.findById).toHaveBeenCalledWith('week-1');
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('activate', () => {
+    it('deve delegar a ativacao para o WeeksService', async () => {
+      const mockResult = {
+        id: 'week-1',
+        startDate: new Date('2026-09-07T00:00:00.000Z'),
+        endDate: new Date('2026-09-13T00:00:00.000Z'),
+        status: WeekStatus.ACTIVE,
+        closedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.spyOn(service, 'activate').mockResolvedValue(mockResult);
+
+      const result = await controller.activate('week-1');
+
+      expect(service.activate).toHaveBeenCalledWith('week-1');
       expect(result).toEqual(mockResult);
     });
   });

@@ -85,4 +85,42 @@ export class WeeksService {
 
     return week;
   }
+
+  async activate(id: string): Promise<Week> {
+    const week = await this.findById(id);
+
+    if (week.status === WeekStatus.ACTIVE) {
+      throw new ConflictException('A semana já está ativa.');
+    }
+
+    if (week.status === WeekStatus.CLOSED) {
+      throw new ConflictException('Semanas fechadas não podem ser reativadas.');
+    }
+
+    if (week.status !== WeekStatus.DRAFT) {
+      throw new ConflictException(
+        `Apenas semanas em DRAFT podem ser ativadas. Status atual: ${week.status}.`,
+      );
+    }
+
+    const activeWeek = await this.prisma.week.findFirst({
+      where: {
+        status: WeekStatus.ACTIVE,
+        id: { not: id },
+      },
+    });
+
+    if (activeWeek) {
+      throw new ConflictException(
+        'Já existe uma semana ativa no momento. Feche-a antes de ativar uma nova semana.',
+      );
+    }
+
+    return this.prisma.week.update({
+      where: { id },
+      data: {
+        status: WeekStatus.ACTIVE,
+      },
+    });
+  }
 }

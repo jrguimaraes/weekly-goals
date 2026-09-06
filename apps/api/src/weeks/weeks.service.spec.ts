@@ -21,6 +21,7 @@ describe('WeeksService', () => {
               findFirst: vi.fn(),
               findMany: vi.fn(),
               findUnique: vi.fn(),
+              update: vi.fn(),
             },
           },
         },
@@ -157,6 +158,118 @@ describe('WeeksService', () => {
 
       await expect(service.findById('inexistente')).rejects.toThrow(
         NotFoundException,
+      );
+    });
+  });
+
+  describe('activate', () => {
+    it('deve ativar com sucesso uma semana em DRAFT quando nao houver semana ativa', async () => {
+      const draftWeek = {
+        id: 'week-1',
+        startDate: new Date('2026-09-07'),
+        endDate: new Date('2026-09-13'),
+        status: WeekStatus.DRAFT,
+        closedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const activatedWeek = {
+        ...draftWeek,
+        status: WeekStatus.ACTIVE,
+      };
+
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek);
+      vi.spyOn(prismaService.week, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prismaService.week, 'update').mockResolvedValue(activatedWeek);
+
+      const result = await service.activate('week-1');
+
+      expect(prismaService.week.findFirst).toHaveBeenCalledWith({
+        where: {
+          status: WeekStatus.ACTIVE,
+          id: { not: 'week-1' },
+        },
+      });
+      expect(prismaService.week.update).toHaveBeenCalledWith({
+        where: { id: 'week-1' },
+        data: { status: WeekStatus.ACTIVE },
+      });
+      expect(result).toEqual(activatedWeek);
+    });
+
+    it('deve lancar NotFoundException se a semana nao existir', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(null);
+
+      await expect(service.activate('inexistente')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('deve lancar ConflictException se a semana ja estiver ACTIVE', async () => {
+      const activeWeek = {
+        id: 'week-1',
+        startDate: new Date('2026-09-07'),
+        endDate: new Date('2026-09-13'),
+        status: WeekStatus.ACTIVE,
+        closedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(activeWeek);
+
+      await expect(service.activate('week-1')).rejects.toThrow(
+        new ConflictException('A semana já está ativa.'),
+      );
+    });
+
+    it('deve lancar ConflictException se a semana estiver CLOSED', async () => {
+      const closedWeek = {
+        id: 'week-1',
+        startDate: new Date('2026-09-07'),
+        endDate: new Date('2026-09-13'),
+        status: WeekStatus.CLOSED,
+        closedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(closedWeek);
+
+      await expect(service.activate('week-1')).rejects.toThrow(
+        new ConflictException('Semanas fechadas não podem ser reativadas.'),
+      );
+    });
+
+    it('deve lancar ConflictException se ja existir outra semana ACTIVE', async () => {
+      const draftWeek = {
+        id: 'week-2',
+        startDate: new Date('2026-09-14'),
+        endDate: new Date('2026-09-20'),
+        status: WeekStatus.DRAFT,
+        closedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const existingActiveWeek = {
+        id: 'week-1',
+        startDate: new Date('2026-09-07'),
+        endDate: new Date('2026-09-13'),
+        status: WeekStatus.ACTIVE,
+        closedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek);
+      vi.spyOn(prismaService.week, 'findFirst').mockResolvedValue(existingActiveWeek);
+
+      await expect(service.activate('week-2')).rejects.toThrow(
+        new ConflictException(
+          'Já existe uma semana ativa no momento. Feche-a antes de ativar uma nova semana.',
+        ),
       );
     });
   });
