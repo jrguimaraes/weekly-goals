@@ -6,6 +6,7 @@ import { validateEnv } from './config/env.validation.js';
 import { CategoriesModule } from './categories/categories.module.js';
 import { GoalsModule } from './goals/goals.module.js';
 import { HealthModule } from './health/health.module.js';
+import { MetricsModule } from './metrics/metrics.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { WeeksModule } from './weeks/weeks.module.js';
 
@@ -20,6 +21,7 @@ import { WeeksModule } from './weeks/weeks.module.js';
     CategoriesModule,
     WeeksModule,
     GoalsModule,
+    MetricsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
