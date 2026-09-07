@@ -2,7 +2,9 @@
 
 > **Sistema de planejamento, acompanhamento semanal e geração de relatórios consolidados e imutáveis de metas.**
 
-O **Weekly Goals** é uma aplicação completa (monorepo full-stack) projetada para estruturar o ciclo de produtividade pessoal em intervalos estritos de 7 dias. O sistema combina categorização temática, derivação automática de status de metas, indicadores consolidados em tempo real (`Completion Rate` e `Progress Rate`) e um mecanismo ACID de fechamento semanal com persistência de snapshot imutável de relatório.
+O **Weekly Goals** é uma aplicação para planejamento e acompanhamento de metas semanais, com categorias, métricas de progresso, relatórios e histórico.
+
+A ideia surgiu a partir de uma rotina pessoal de planejamento e acompanhamento semanal, com o objetivo de transformar esse processo em uma ferramenta simples e útil para o dia a dia.
 
 ---
 
@@ -75,7 +77,7 @@ Certifique-se de possuir instalado em sua máquina:
 ### 2. Clonar e Instalar Dependências
 
 ```bash
-git clone https://github.com/seu-usuario/weekly-goals.git
+git clone https://github.com/jrguimaraes/weekly-goals.git
 cd weekly-goals
 
 # Instala todas as dependências do monorepo
@@ -146,7 +148,7 @@ pnpm start:api
 ```bash
 pnpm start:web
 ```
-> A interface web estará disponível em: `http://localhost:3001` (ou `http://localhost:3000` conforme porta livre)
+> A interface web estará disponível em: `http://localhost:3001`
 
 ---
 
@@ -156,7 +158,7 @@ O repositório possui uma suíte abrangente de testes automatizados unitários, 
 
 ### Executar Testes
 ```bash
-# Executa todos os testes do monorepo (API + Web)
+# Executa todos os testes unitários do monorepo (API + Web)
 pnpm test
 
 # Executar apenas testes do backend (NestJS / Vitest)
@@ -185,31 +187,49 @@ pnpm build
 
 ## 📑 Principais Endpoints da API (REST)
 
-A documentação interativa completa com exemplos de payloads pode ser acessada em `/api/docs`.
+A documentação interativa completa com esquemas JSON e exemplos pode ser acessada em `/api/docs`.
 
 ### Categorias (`/api/categories`)
-- `POST /api/categories` — Cadastra nova categoria com validação de unicidade e ordenação.
-- `GET /api/categories` — Lista categorias (suporta filtro `?includeInactive=true`).
-- `PATCH /api/categories/:id` — Atualiza nome, descrição ou posição.
-- `PATCH /api/categories/:id/archive` — Arquiva categoria (`isActive = false`).
+- `POST /api/categories` — Cadastra nova categoria com validação de unicidade de nome (*case-insensitive*) e ordenação (`201 Created` ou `409 Conflict` se nome já existir).
+- `GET /api/categories` — Lista categorias cadastradas ordenadas por posição e data de criação (suporta filtro `?isActive=true` ou `?isActive=false`).
+- `GET /api/categories/:id` — Retorna dados da categoria pelo seu UUID.
+- `PATCH /api/categories/:id` — Atualiza nome, descrição, posição ou status ativo (com validação de unicidade de nome, retornando `409 Conflict`).
+- `DELETE /api/categories/:id` — Arquiva a categoria via soft delete (`isActive = false`).
 
 ### Semanas (`/api/weeks`)
-- `POST /api/weeks` — Cria semana em status `DRAFT` com cálculo de 7 dias e checagem de sobreposição.
-- `GET /api/weeks` — Lista semanas cadastradas em ordem decrescente (suporta filtro `?status=`).
-- `GET /api/weeks/:id` — Retorna detalhes da semana.
-- `GET /api/weeks/:id/summary` — Retorna cálculo consolidado em tempo real (`Completion Rate`, `Progress Rate`, métricas por categoria).
-- `POST /api/weeks/:id/activate` — Ativa semana em planejamento (`DRAFT → ACTIVE`).
-- `POST /api/weeks/:id/close` — Encerra semana ativa, congela metas e gera snapshot atômico (`ACTIVE → CLOSED`).
+- `POST /api/weeks` — Cria semana em status `DRAFT` com cálculo automático de 7 dias (`endDate = startDate + 6 dias`) e validação de sobreposição com semanas existentes (`409 Conflict`).
+- `GET /api/weeks` — Lista semanas cadastradas em ordem decrescente de início (suporta filtro `?status=DRAFT|ACTIVE|CLOSED`).
+- `GET /api/weeks/:id` — Retorna detalhes da semana pelo seu UUID.
+- `GET /api/weeks/:id/summary` — Retorna cálculo consolidado em tempo real (`Completion Rate`, `Progress Rate` e métricas gerais e por categoria).
+- `POST /api/weeks/:id/activate` — Ativa semana em planejamento (`DRAFT → ACTIVE`). Rejeita se já houver outra semana ativa (`409 Conflict`).
+- `POST /api/weeks/:id/close` — Encerra semana ativa atomicamente (`ACTIVE → CLOSED`), congela status das metas e persiste o snapshot imutável do relatório.
 
-### Metas (`/api/goals`)
-- `POST /api/goals` — Cria meta vinculada a semana e categoria ativas.
-- `GET /api/weeks/:id/goals` — Lista metas de uma semana específica.
-- `PATCH /api/goals/:id` — Atualiza título, descrição ou categoria da meta.
-- `PATCH /api/goals/:id/progress` — Registra progresso com recálculo automático de status e `completedAt`.
-- `DELETE /api/goals/:id` — Remove meta (bloqueado se a semana estiver fechada).
+### Metas (`/api/goals` e `/api/weeks/:weekId/goals`)
+- `POST /api/weeks/:weekId/goals` — Cria meta vinculada à semana e categoria informadas (`BINARY` com alvo fixado em 1 ou `QUANTITY` com alvo numérico > 0).
+- `GET /api/weeks/:weekId/goals` — Lista metas de uma semana específica (suporta filtros `?categoryId=` e `?status=PENDING|IN_PROGRESS|COMPLETED`).
+- `GET /api/goals/:id` — Retorna dados detalhados de uma meta individual pelo seu UUID.
+- `PATCH /api/goals/:id` — Edita atributos permitidos da meta (`title`, `description`, `priority`, `targetValue`, `categoryId`). **O tipo `Goal.type` é estritamente imutável após a criação**. Bloqueado se a semana estiver fechada (`409 Conflict`).
+- `PATCH /api/goals/:id/progress` — Registra progresso numérico com recálculo automático de status (`PENDING`, `IN_PROGRESS`, `COMPLETED`) e `completedAt`. Bloqueado se a semana estiver fechada (`409 Conflict`).
+- `DELETE /api/goals/:id` — Remove meta (bloqueado se a semana estiver fechada com `409 Conflict`).
 
 ### Relatórios (`/api/weeks/:id/report`)
-- `GET /api/weeks/:id/report` — Retorna snapshot imutável do relatório consolidado para semanas fechadas.
+- `GET /api/weeks/:id/report` — Retorna o snapshot imutável do relatório consolidado para semanas fechadas (`400 Bad Request` se a semana ainda não foi encerrada).
+
+### Saúde da Aplicação (`/api/health`)
+- `GET /api/health` — Retorna status operacional da API e conectividade com o banco de dados PostgreSQL (`200 OK` ou `503 Service Unavailable`).
+
+---
+
+## 🚦 Códigos de Resposta HTTP Padronizados
+
+| Código | Significado | Aplicação no Weekly Goals |
+|---|---|---|
+| `200 OK` | Sucesso | Consulta de dados ou atualização de recursos existentes executada com êxito. |
+| `201 Created` | Criado | Criação de semana, categoria ou meta realizada com sucesso. |
+| `400 Bad Request` | Requisição Inválida | Falha de validação nos dados de entrada (DTOs), formato inválido de data ou consulta de relatório em semana aberta. |
+| `404 Not Found` | Não Encontrado | Recurso (categoria, semana, meta ou relatório) inexistente para o UUID informado. |
+| `409 Conflict` | Conflito de Domínio | Violação de regra de negócio: categoria duplicada, períodos de semana sobrepostos, semana fechada imutável ou tentativa de ativar mais de uma semana ao mesmo tempo. |
+| `503 Service Unavailable` | Indisponível | Falha na verificação de saúde ou indisponibilidade de conexão com o banco de dados. |
 
 ---
 
@@ -222,6 +242,18 @@ Para assegurar foco, entrega ágil e máxima robustez nas funcionalidades essenc
 3. **Snapshot Imediato**: A consolidação e persistência do relatório ocorrem na mesma transação atômica do endpoint de encerramento (`close`), dispensando workers ou filas em segundo plano.
 4. **Tipos de Metas no MVP**: Foco em metas `BINARY` e `QUANTITY`. Metas de limite de teto (`LIMIT`) ou hábitos contínuos (`HABIT`) ficam reservadas para versões futuras.
 5. **Relatório em Impressão Nativa**: O formato de exportação de relatórios adota estilos CSS de impressão (`@media print` com layout otimizado para PDF/impressão física), sem acoplar bibliotecas pesadas de geração de PDF no servidor.
+
+---
+
+## 🤖 Desenvolvimento Assistido por IA
+
+Este projeto é desenvolvido com apoio de um agente de IA em um fluxo incremental e supervisionado.
+
+As etapas de desenvolvimento possuem escopo previamente definido. Ao finalizar cada etapa, o agente executa as validações aplicáveis (lint, testes unitários, testes de integração/E2E e compilação) e apresenta um resumo estruturado das alterações realizadas.
+
+Nenhum commit é criado automaticamente. As alterações são revisadas e aprovadas antes de serem registradas no histórico do projeto.
+
+As decisões de produto, arquitetura, regras de negócio e aprovação das implementações permanecem sob constante revisão humana.
 
 ---
 
