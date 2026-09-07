@@ -789,4 +789,291 @@ describe('GoalsService', () => {
       expect(result).toEqual(mockGoal);
     });
   });
+
+  describe('updateProgress', () => {
+    const mockWeekDraft = {
+      id: 'week-1',
+      startDate: new Date('2026-09-07'),
+      endDate: new Date('2026-09-13'),
+      status: WeekStatus.DRAFT,
+      closedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const mockWeekActive = {
+      ...mockWeekDraft,
+      status: WeekStatus.ACTIVE,
+    };
+
+    const mockWeekClosed = {
+      ...mockWeekDraft,
+      status: WeekStatus.CLOSED,
+      closedAt: new Date(),
+    };
+
+    const mockCategory = {
+      id: 'cat-1',
+      name: 'Saúde',
+      description: null,
+      position: 0,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const mockGoalBinary = {
+      id: 'goal-bin',
+      weekId: 'week-1',
+      categoryId: 'cat-1',
+      title: 'Beber 2L de água diariamente',
+      description: null,
+      type: GoalType.BINARY,
+      priority: GoalPriority.MEDIUM,
+      targetValue: 1,
+      currentValue: 0,
+      status: GoalStatus.PENDING,
+      completedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      week: mockWeekActive,
+      category: mockCategory,
+    };
+
+    const mockGoalQuantity = {
+      id: 'goal-qty',
+      weekId: 'week-1',
+      categoryId: 'cat-1',
+      title: 'Correr 10km',
+      description: null,
+      type: GoalType.QUANTITY,
+      priority: GoalPriority.HIGH,
+      targetValue: 10,
+      currentValue: 0,
+      status: GoalStatus.PENDING,
+      completedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      week: mockWeekActive,
+      category: mockCategory,
+    };
+
+    it('deve atualizar meta BINARY para COMPLETED com completedAt quando currentValue for 1', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalBinary);
+      vi.spyOn(prismaService.goal, 'update').mockImplementation(async (args) => ({
+        ...mockGoalBinary,
+        ...args.data,
+      } as any));
+
+      const result = await service.updateProgress('goal-bin', {
+        currentValue: 1,
+      });
+
+      expect(prismaService.goal.update).toHaveBeenCalledWith({
+        where: { id: 'goal-bin' },
+        data: {
+          currentValue: 1,
+          status: GoalStatus.COMPLETED,
+          completedAt: expect.any(Date),
+        },
+        include: { category: true },
+      });
+      expect(result.status).toBe(GoalStatus.COMPLETED);
+      expect(result.currentValue).toBe(1);
+      expect(result.completedAt).toBeInstanceOf(Date);
+    });
+
+    it('deve atualizar meta BINARY para PENDING e limpar completedAt quando currentValue for 0', async () => {
+      const completedBinary = {
+        ...mockGoalBinary,
+        currentValue: 1,
+        status: GoalStatus.COMPLETED,
+        completedAt: new Date(),
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(completedBinary);
+      vi.spyOn(prismaService.goal, 'update').mockImplementation(async (args) => ({
+        ...completedBinary,
+        ...args.data,
+      } as any));
+
+      const result = await service.updateProgress('goal-bin', {
+        currentValue: 0,
+      });
+
+      expect(prismaService.goal.update).toHaveBeenCalledWith({
+        where: { id: 'goal-bin' },
+        data: {
+          currentValue: 0,
+          status: GoalStatus.PENDING,
+          completedAt: null,
+        },
+        include: { category: true },
+      });
+      expect(result.status).toBe(GoalStatus.PENDING);
+      expect(result.currentValue).toBe(0);
+      expect(result.completedAt).toBeNull();
+    });
+
+    it('deve rejeitar currentValue diferente de 0 e 1 para meta BINARY com BadRequestException', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalBinary);
+
+      await expect(
+        service.updateProgress('goal-bin', { currentValue: 2 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve atualizar meta QUANTITY para IN_PROGRESS e completedAt null quando progresso for parcial', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+      vi.spyOn(prismaService.goal, 'update').mockImplementation(async (args) => ({
+        ...mockGoalQuantity,
+        ...args.data,
+      } as any));
+
+      const result = await service.updateProgress('goal-qty', {
+        currentValue: 5,
+      });
+
+      expect(result.status).toBe(GoalStatus.IN_PROGRESS);
+      expect(result.currentValue).toBe(5);
+      expect(result.completedAt).toBeNull();
+    });
+
+    it('deve atualizar meta QUANTITY para COMPLETED quando atingir o target exato', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+      vi.spyOn(prismaService.goal, 'update').mockImplementation(async (args) => ({
+        ...mockGoalQuantity,
+        ...args.data,
+      } as any));
+
+      const result = await service.updateProgress('goal-qty', {
+        currentValue: 10,
+      });
+
+      expect(result.status).toBe(GoalStatus.COMPLETED);
+      expect(result.currentValue).toBe(10);
+      expect(result.completedAt).toBeInstanceOf(Date);
+    });
+
+    it('deve atualizar meta QUANTITY para COMPLETED quando superar o target', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+      vi.spyOn(prismaService.goal, 'update').mockImplementation(async (args) => ({
+        ...mockGoalQuantity,
+        ...args.data,
+      } as any));
+
+      const result = await service.updateProgress('goal-qty', {
+        currentValue: 15,
+      });
+
+      expect(result.status).toBe(GoalStatus.COMPLETED);
+      expect(result.currentValue).toBe(15);
+      expect(result.completedAt).toBeInstanceOf(Date);
+    });
+
+    it('deve manter completedAt original se meta QUANTITY ja estava COMPLETED e progresso aumentou', async () => {
+      const originalCompletedAt = new Date('2026-09-08T10:00:00Z');
+      const alreadyCompleted = {
+        ...mockGoalQuantity,
+        currentValue: 10,
+        status: GoalStatus.COMPLETED,
+        completedAt: originalCompletedAt,
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(alreadyCompleted);
+      vi.spyOn(prismaService.goal, 'update').mockImplementation(async (args) => ({
+        ...alreadyCompleted,
+        ...args.data,
+      } as any));
+
+      const result = await service.updateProgress('goal-qty', {
+        currentValue: 12,
+      });
+
+      expect(result.status).toBe(GoalStatus.COMPLETED);
+      expect(result.completedAt).toBe(originalCompletedAt);
+    });
+
+    it('deve reverter para IN_PROGRESS e limpar completedAt se progresso for reduzido abaixo da meta', async () => {
+      const completedGoal = {
+        ...mockGoalQuantity,
+        currentValue: 10,
+        status: GoalStatus.COMPLETED,
+        completedAt: new Date(),
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(completedGoal);
+      vi.spyOn(prismaService.goal, 'update').mockImplementation(async (args) => ({
+        ...completedGoal,
+        ...args.data,
+      } as any));
+
+      const result = await service.updateProgress('goal-qty', {
+        currentValue: 6,
+      });
+
+      expect(result.status).toBe(GoalStatus.IN_PROGRESS);
+      expect(result.currentValue).toBe(6);
+      expect(result.completedAt).toBeNull();
+    });
+
+    it('deve reverter para PENDING e limpar completedAt se progresso for reduzido a zero', async () => {
+      const inProgressGoal = {
+        ...mockGoalQuantity,
+        currentValue: 4,
+        status: GoalStatus.IN_PROGRESS,
+        completedAt: null,
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(inProgressGoal);
+      vi.spyOn(prismaService.goal, 'update').mockImplementation(async (args) => ({
+        ...inProgressGoal,
+        ...args.data,
+      } as any));
+
+      const result = await service.updateProgress('goal-qty', {
+        currentValue: 0,
+      });
+
+      expect(result.status).toBe(GoalStatus.PENDING);
+      expect(result.currentValue).toBe(0);
+      expect(result.completedAt).toBeNull();
+    });
+
+    it('deve rejeitar currentValue negativo para meta QUANTITY com BadRequestException', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+
+      await expect(
+        service.updateProgress('goal-qty', { currentValue: -2 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve permitir atualizar progresso em semana DRAFT', async () => {
+      const draftGoal = { ...mockGoalQuantity, week: mockWeekDraft };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(draftGoal);
+      vi.spyOn(prismaService.goal, 'update').mockImplementation(async (args) => ({
+        ...draftGoal,
+        ...args.data,
+      } as any));
+
+      const result = await service.updateProgress('goal-qty', {
+        currentValue: 3,
+      });
+
+      expect(result.currentValue).toBe(3);
+    });
+
+    it('deve rejeitar atualizacao de progresso em semana CLOSED com ConflictException', async () => {
+      const closedGoal = { ...mockGoalQuantity, week: mockWeekClosed };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(closedGoal);
+
+      await expect(
+        service.updateProgress('goal-qty', { currentValue: 5 }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('deve lancar NotFoundException se a meta nao existir ao atualizar progresso', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(null);
+
+      await expect(
+        service.updateProgress('inexistente', { currentValue: 5 }),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
 });

@@ -14,6 +14,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateGoalDto } from './dto/create-goal.dto.js';
 import { ListGoalsQueryDto } from './dto/list-goals-query.dto.js';
+import { UpdateGoalProgressDto } from './dto/update-goal-progress.dto.js';
 import { UpdateGoalDto } from './dto/update-goal.dto.js';
 
 @Injectable()
@@ -279,5 +280,67 @@ export class GoalsService {
 
   async remove(id: string): Promise<Goal> {
     return this.delete(id);
+  }
+
+  async updateProgress(
+    id: string,
+    dto: UpdateGoalProgressDto,
+  ): Promise<Goal> {
+    const goal = await this.prisma.goal.findUnique({
+      where: { id },
+      include: {
+        week: true,
+      },
+    });
+
+    if (!goal) {
+      throw new NotFoundException(`Meta com id "${id}" não encontrada.`);
+    }
+
+    if (goal.week.status === WeekStatus.CLOSED) {
+      throw new ConflictException(
+        'Não é possível atualizar o progresso de metas de uma semana fechada.',
+      );
+    }
+
+    if (goal.type === GoalType.BINARY) {
+      if (dto.currentValue !== 0 && dto.currentValue !== 1) {
+        throw new BadRequestException(
+          'Para metas do tipo BINARY, currentValue deve ser 0 ou 1.',
+        );
+      }
+    } else if (goal.type === GoalType.QUANTITY) {
+      if (dto.currentValue < 0) {
+        throw new BadRequestException(
+          'Para metas do tipo QUANTITY, currentValue deve ser maior ou igual a 0.',
+        );
+      }
+    }
+
+    let status: GoalStatus;
+    let completedAt: Date | null;
+
+    if (dto.currentValue >= goal.targetValue) {
+      status = GoalStatus.COMPLETED;
+      completedAt = goal.completedAt ?? new Date();
+    } else if (dto.currentValue > 0) {
+      status = GoalStatus.IN_PROGRESS;
+      completedAt = null;
+    } else {
+      status = GoalStatus.PENDING;
+      completedAt = null;
+    }
+
+    return this.prisma.goal.update({
+      where: { id },
+      data: {
+        currentValue: dto.currentValue,
+        status,
+        completedAt,
+      },
+      include: {
+        category: true,
+      },
+    });
   }
 }

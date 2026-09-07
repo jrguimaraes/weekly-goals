@@ -18,6 +18,7 @@ describe('GoalsController', () => {
             findById: vi.fn(),
             findByWeekId: vi.fn(),
             update: vi.fn(),
+            updateProgress: vi.fn(),
             delete: vi.fn(),
           },
         },
@@ -111,6 +112,34 @@ describe('GoalsController', () => {
 
       expect(service.delete).toHaveBeenCalledWith('goal-1');
       expect(result).toEqual(deletedGoal);
+    });
+  });
+
+  describe('updateProgress', () => {
+    it('deve delegar a atualizacao de progresso de meta para o GoalsService', async () => {
+      const dto = { currentValue: 8 };
+      const updatedGoal = {
+        id: 'goal-1',
+        weekId: 'week-1',
+        categoryId: 'cat-1',
+        title: 'Correr 10km',
+        description: null,
+        type: GoalType.QUANTITY,
+        priority: GoalPriority.HIGH,
+        targetValue: 10,
+        currentValue: 8,
+        status: GoalStatus.IN_PROGRESS,
+        completedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.spyOn(service, 'updateProgress').mockResolvedValue(updatedGoal);
+
+      const result = await controller.updateProgress('goal-1', dto);
+
+      expect(service.updateProgress).toHaveBeenCalledWith('goal-1', dto);
+      expect(result).toEqual(updatedGoal);
     });
   });
 });
