@@ -125,8 +125,8 @@ export default function HomePage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-slate-600">Banco de Dados:</span>
-                <Badge variant={health.database === 'connected' ? 'success' : 'warning'}>
-                  {health.database === 'connected' ? 'Conectado' : 'Desconectado'}
+                <Badge variant={health.database?.status === 'up' ? 'success' : 'warning'}>
+                  {health.database?.status === 'up' ? 'Conectado' : 'Desconectado'}
                 </Badge>
               </div>
               <div className="text-xs text-slate-500">
