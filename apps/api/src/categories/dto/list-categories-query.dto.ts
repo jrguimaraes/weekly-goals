@@ -1,7 +1,12 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional } from 'class-validator';
 
 export class ListCategoriesQueryDto {
+  @ApiPropertyOptional({
+    description: 'Filtrar categorias por status ativo/inativo',
+    example: true,
+  })
   @IsOptional()
   @Transform(({ obj }: { obj: Record<string, unknown> }) => {
     const val = obj?.isActive;
@@ -12,3 +17,4 @@ export class ListCategoriesQueryDto {
   @IsBoolean()
   isActive?: boolean;
 }
+
