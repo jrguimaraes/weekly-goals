@@ -5,6 +5,8 @@ import {
   CategorySummaryCategory,
   GoalForMetrics,
   MetricsResult,
+  WeekSummaryResponse,
+  WeekSummaryWeek,
 } from './metrics.types.js';
 
 @Injectable()
@@ -120,5 +122,33 @@ export class MetricsService {
         ...metrics,
       };
     });
+  }
+
+  /**
+   * Constrói o objeto consolidado de resumo da semana.
+   */
+  buildWeekSummary(
+    week: WeekSummaryWeek,
+    goals: GoalForMetrics[],
+    categories: CategorySummaryCategory[],
+  ): WeekSummaryResponse {
+    const metrics = this.calculateMetrics(goals);
+    const categoryMetrics = this.calculateCategoryMetrics(goals, categories);
+
+    return {
+      week: {
+        id: week.id,
+        startDate: week.startDate,
+        endDate: week.endDate,
+        status: week.status,
+        closedAt: week.closedAt,
+      },
+      totalGoals: metrics.totalGoals,
+      completedGoals: metrics.completedGoals,
+      completionRate: metrics.completionRate,
+      progressRate: metrics.progressRate,
+      metrics,
+      categories: categoryMetrics,
+    };
   }
 }

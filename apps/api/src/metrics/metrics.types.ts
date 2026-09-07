@@ -26,3 +26,22 @@ export interface CategoryMetricsResult extends MetricsResult {
   categoryId: string;
   categoryName: string;
 }
+
+export interface WeekSummaryWeek {
+  id: string;
+  startDate: Date;
+  endDate: Date;
+  status: string;
+  closedAt: Date | null;
+}
+
+export interface WeekSummaryResponse {
+  week: WeekSummaryWeek;
+  totalGoals: number;
+  completedGoals: number;
+  completionRate: number;
+  progressRate: number;
+  metrics: MetricsResult;
+  categories: CategoryMetricsResult[];
+}
+

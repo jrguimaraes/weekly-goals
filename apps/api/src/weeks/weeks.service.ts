@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Week, WeekStatus } from '@prisma/client';
+import { MetricsService } from '../metrics/metrics.service.js';
+import { WeekSummaryResponse } from '../metrics/metrics.types.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateWeekDto } from './dto/create-week.dto.js';
 import { ListWeeksQueryDto } from './dto/list-weeks-query.dto.js';
@@ -39,7 +41,10 @@ function calculateEndDate(startDate: Date): Date {
 
 @Injectable()
 export class WeeksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly metricsService: MetricsService,
+  ) {}
 
   async create(dto: CreateWeekDto): Promise<Week> {
     const startDate = parseCalendarDate(dto.startDate);
@@ -122,5 +127,23 @@ export class WeeksService {
         status: WeekStatus.ACTIVE,
       },
     });
+  }
+
+  async getSummary(id: string): Promise<WeekSummaryResponse> {
+    const week = await this.findById(id);
+
+    const goals = await this.prisma.goal.findMany({
+      where: { weekId: id },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const categories = await this.prisma.category.findMany({
+      where: {
+        OR: [{ isActive: true }, { goals: { some: { weekId: id } } }],
+      },
+      orderBy: [{ position: 'asc' }, { name: 'asc' }],
+    });
+
+    return this.metricsService.buildWeekSummary(week, goals, categories);
   }
 }

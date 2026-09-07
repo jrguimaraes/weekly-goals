@@ -9,6 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { Week } from '@prisma/client';
+import { WeekSummaryResponse } from '../metrics/metrics.types.js';
 import { CreateWeekDto } from './dto/create-week.dto.js';
 import { ListWeeksQueryDto } from './dto/list-weeks-query.dto.js';
 import { WeeksService } from './weeks.service.js';
@@ -31,6 +32,11 @@ export class WeeksController {
   @Get()
   async findAll(@Query() query: ListWeeksQueryDto): Promise<Week[]> {
     return this.weeksService.findAll(query);
+  }
+
+  @Get(':id/summary')
+  async getSummary(@Param('id') id: string): Promise<WeekSummaryResponse> {
+    return this.weeksService.getSummary(id);
   }
 
   @Get(':id')

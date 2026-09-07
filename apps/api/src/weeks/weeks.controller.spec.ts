@@ -19,6 +19,7 @@ describe('WeeksController', () => {
             findAll: vi.fn(),
             findById: vi.fn(),
             activate: vi.fn(),
+            getSummary: vi.fn(),
           },
         },
       ],
@@ -117,6 +118,47 @@ describe('WeeksController', () => {
 
       expect(service.activate).toHaveBeenCalledWith('week-1');
       expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('getSummary', () => {
+    it('deve delegar a busca de resumo para o WeeksService', async () => {
+      const mockSummary = {
+        week: {
+          id: 'week-1',
+          startDate: new Date('2026-09-07T00:00:00.000Z'),
+          endDate: new Date('2026-09-13T00:00:00.000Z'),
+          status: WeekStatus.ACTIVE,
+          closedAt: null,
+        },
+        totalGoals: 2,
+        completedGoals: 1,
+        completionRate: 50,
+        progressRate: 75,
+        metrics: {
+          totalGoals: 2,
+          completedGoals: 1,
+          completionRate: 50,
+          progressRate: 75,
+        },
+        categories: [
+          {
+            categoryId: 'cat-1',
+            categoryName: 'Saúde',
+            totalGoals: 2,
+            completedGoals: 1,
+            completionRate: 50,
+            progressRate: 75,
+          },
+        ],
+      };
+
+      vi.spyOn(service, 'getSummary').mockResolvedValue(mockSummary);
+
+      const result = await controller.getSummary('week-1');
+
+      expect(service.getSummary).toHaveBeenCalledWith('week-1');
+      expect(result).toEqual(mockSummary);
     });
   });
 });

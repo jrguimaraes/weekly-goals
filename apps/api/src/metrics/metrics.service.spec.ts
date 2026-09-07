@@ -409,4 +409,57 @@ describe('MetricsService', () => {
       });
     });
   });
+
+  describe('buildWeekSummary', () => {
+    it('deve montar o resumo completo da semana com métricas gerais e por categoria', () => {
+      const mockWeek = {
+        id: 'week-1',
+        startDate: new Date('2026-09-07T00:00:00.000Z'),
+        endDate: new Date('2026-09-13T00:00:00.000Z'),
+        status: 'ACTIVE',
+        closedAt: null,
+      };
+
+      const categories = [
+        { id: 'cat-1', name: 'Saúde' },
+        { id: 'cat-2', name: 'Trabalho' },
+      ];
+
+      const goals: GoalForMetrics[] = [
+        {
+          categoryId: 'cat-1',
+          type: GoalType.BINARY,
+          targetValue: 1,
+          currentValue: 1,
+          status: GoalStatus.COMPLETED,
+        },
+        {
+          categoryId: 'cat-1',
+          type: GoalType.QUANTITY,
+          targetValue: 10,
+          currentValue: 5,
+          status: GoalStatus.IN_PROGRESS,
+        },
+      ];
+
+      const summary = service.buildWeekSummary(mockWeek, goals, categories);
+
+      expect(summary.week).toEqual(mockWeek);
+      expect(summary.totalGoals).toBe(2);
+      expect(summary.completedGoals).toBe(1);
+      expect(summary.completionRate).toBe(50);
+      expect(summary.progressRate).toBe(75);
+      expect(summary.metrics).toEqual({
+        totalGoals: 2,
+        completedGoals: 1,
+        completionRate: 50,
+        progressRate: 75,
+      });
+      expect(summary.categories).toHaveLength(2);
+      expect(summary.categories[0].categoryId).toBe('cat-1');
+      expect(summary.categories[0].completionRate).toBe(50);
+      expect(summary.categories[1].categoryId).toBe('cat-2');
+      expect(summary.categories[1].totalGoals).toBe(0);
+    });
+  });
 });
