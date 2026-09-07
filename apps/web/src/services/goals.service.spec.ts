@@ -168,4 +168,30 @@ describe('goalsService', () => {
     expect(result).toEqual(mockDeleted);
     expect(apiClient.delete).toHaveBeenCalledWith('/goals/g-1');
   });
+
+  it('deve atualizar o progresso de uma meta via PATCH /goals/:id/progress', async () => {
+    const mockUpdated: Goal = {
+      id: 'g-1',
+      weekId: 'w-1',
+      categoryId: 'c-1',
+      title: 'Meta',
+      description: null,
+      type: 'QUANTITY',
+      priority: 'MEDIUM',
+      targetValue: 5,
+      currentValue: 3,
+      status: 'IN_PROGRESS',
+      completedAt: null,
+      createdAt: '2026-09-07T00:00:00Z',
+      updatedAt: '2026-09-07T00:00:00Z',
+    };
+    vi.mocked(apiClient.patch).mockResolvedValue(mockUpdated);
+
+    const result = await goalsService.updateProgress('g-1', 3);
+
+    expect(result).toEqual(mockUpdated);
+    expect(apiClient.patch).toHaveBeenCalledWith('/goals/g-1/progress', {
+      currentValue: 3,
+    });
+  });
 });

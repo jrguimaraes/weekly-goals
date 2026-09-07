@@ -16,6 +16,7 @@ interface GoalListProps {
   onEdit: (goal: Goal) => void;
   onDelete: (goal: Goal) => void;
   onAddNew: () => void;
+  onProgressChange?: (goalId: string, newValue: number) => Promise<void>;
 }
 
 export function GoalList({
@@ -29,6 +30,7 @@ export function GoalList({
   onEdit,
   onDelete,
   onAddNew,
+  onProgressChange,
 }: GoalListProps) {
   const hasActiveFilters = selectedCategoryId !== 'all' || selectedStatus !== 'all';
 
@@ -154,6 +156,7 @@ export function GoalList({
               isWeekClosed={isWeekClosed}
               onEdit={onEdit}
               onDelete={onDelete}
+              onProgressChange={onProgressChange}
             />
           ))}
         </div>

@@ -113,4 +113,19 @@ describe('GoalCard', () => {
     expect(html).not.toContain('Editar</button>');
     expect(html).not.toContain('Excluir</button>');
   });
+
+  it('deve renderizar controle de acompanhamento quando onProgressChange for fornecido', () => {
+    const html = renderToString(
+      <GoalCard
+        goal={binaryGoal}
+        isWeekClosed={false}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onProgressChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('Acompanhamento:');
+    expect(html).toContain('Concluída');
+  });
 });

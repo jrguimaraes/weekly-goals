@@ -147,6 +147,18 @@ export default function WeekGoalsPage() {
     loadData(selectedCategoryId, selectedStatus);
   }
 
+  async function handleProgressChange(goalId: string, newCurrentValue: number) {
+    try {
+      const updatedGoal = await goalsService.updateProgress(goalId, newCurrentValue);
+      setGoals((prev) =>
+        prev.map((g) => (g.id === goalId ? updatedGoal : g))
+      );
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Falha ao atualizar o progresso da meta.'));
+      throw err;
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-24">
@@ -309,6 +321,7 @@ export default function WeekGoalsPage() {
         onEdit={handleOpenEdit}
         onDelete={handleOpenDelete}
         onAddNew={handleOpenCreate}
+        onProgressChange={handleProgressChange}
       />
 
       {/* Modal de Criação / Edição */}

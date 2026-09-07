@@ -32,4 +32,8 @@ export const goalsService = {
   async delete(id: string): Promise<Goal> {
     return apiClient.delete<Goal>(`/goals/${id}`);
   },
+
+  async updateProgress(id: string, currentValue: number): Promise<Goal> {
+    return apiClient.patch<Goal>(`/goals/${id}/progress`, { currentValue });
+  },
 };

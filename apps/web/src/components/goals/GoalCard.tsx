@@ -4,6 +4,7 @@ import React from 'react';
 import { GoalTypeBadge } from './GoalTypeBadge';
 import { GoalPriorityBadge } from './GoalPriorityBadge';
 import { GoalStatusBadge } from './GoalStatusBadge';
+import { GoalProgressControl } from './GoalProgressControl';
 import type { Goal } from '../../types/goal';
 
 interface GoalCardProps {
@@ -11,6 +12,7 @@ interface GoalCardProps {
   isWeekClosed: boolean;
   onEdit: (goal: Goal) => void;
   onDelete: (goal: Goal) => void;
+  onProgressChange?: (goalId: string, newValue: number) => Promise<void>;
 }
 
 export function GoalCard({
@@ -18,6 +20,7 @@ export function GoalCard({
   isWeekClosed,
   onEdit,
   onDelete,
+  onProgressChange,
 }: GoalCardProps) {
   const percentage =
     goal.targetValue > 0
@@ -88,6 +91,18 @@ export function GoalCard({
               />
             </div>
           </div>
+
+          {/* Controle de Progresso Ágil */}
+          {onProgressChange && (
+            <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-slate-600">Acompanhamento:</span>
+              <GoalProgressControl
+                goal={goal}
+                isWeekClosed={isWeekClosed}
+                onProgressChange={onProgressChange}
+              />
+            </div>
+          )}
         </div>
 
         {/* Ações */}
