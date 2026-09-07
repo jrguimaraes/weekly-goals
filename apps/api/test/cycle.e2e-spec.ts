@@ -12,7 +12,7 @@ describe('Weekly Goals Lifecycle (e2e)', () => {
   beforeEach(async () => {
     process.env.DATABASE_URL =
       process.env.DATABASE_URL ??
-      'postgresql://postgres:postgres@localhost:5432/weekly_goals?schema=public';
+      'postgresql://postgres:postgres@localhost:5432/weekly_goals?schema=test';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],

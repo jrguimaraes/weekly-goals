@@ -9,5 +9,10 @@ export default defineConfig({
     include: ['**/*.e2e-spec.ts'],
     testTimeout: 30000,
     hookTimeout: 30000,
+    fileParallelism: false,
+    env: {
+      DATABASE_URL:
+        'postgresql://postgres:postgres@localhost:5432/weekly_goals?schema=test',
+    },
   },
 });
