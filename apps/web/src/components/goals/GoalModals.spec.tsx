@@ -82,6 +82,8 @@ describe('GoalModals', () => {
       expect(html).toContain('Editar Meta');
       expect(html).toContain('Salvar Alterações');
       expect(html).toContain('Estudar TypeScript');
+      expect(html).toContain('O tipo da meta não pode ser alterado após a criação.');
+      expect(html).toContain('disabled=""');
     });
   });
 

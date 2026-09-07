@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { GoalPriority, GoalType } from '@prisma/client';
+import { GoalPriority } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsEnum,
@@ -49,14 +49,6 @@ export class UpdateGoalDto {
   @MaxLength(500, { message: 'description não pode ter mais de 500 caracteres' })
   description?: string;
 
-  @ApiPropertyOptional({
-    description: 'Novo tipo da meta',
-    enum: GoalType,
-    example: GoalType.QUANTITY,
-  })
-  @IsOptional()
-  @IsEnum(GoalType, { message: 'type deve ser BINARY ou QUANTITY' })
-  type?: GoalType;
 
   @ApiPropertyOptional({
     description: 'Nova prioridade da meta',

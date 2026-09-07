@@ -26,7 +26,7 @@ export class GoalsController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Edita atributos de uma meta existente (bloqueado se a semana estiver fechada)' })
+  @ApiOperation({ summary: 'Edita atributos de uma meta existente (o tipo Goal.type é imutável após a criação; bloqueado se a semana estiver fechada)' })
   @ApiResponse({ status: 200, description: 'Meta atualizada com sucesso' })
   @ApiResponse({ status: 400, description: 'Dados de atualização inválidos' })
   @ApiResponse({ status: 404, description: 'Meta ou categoria não encontrada' })

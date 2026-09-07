@@ -96,6 +96,31 @@ describe('Weekly Goals Lifecycle (e2e)', () => {
     const goal2Id = goal2Res.body.id;
     expect(goal2Res.body.status).toBe('PENDING');
 
+    // 3.1 Tentar alterar o tipo da meta deve retornar 400 Bad Request
+    await request(app.getHttpServer())
+      .patch(`/api/goals/${goal2Id}`)
+      .send({ type: 'BINARY' })
+      .expect(400);
+
+    // 3.2 Tentar alterar targetValue de meta BINARY para != 1 deve retornar 400 Bad Request
+    await request(app.getHttpServer())
+      .patch(`/api/goals/${goal1Id}`)
+      .send({ targetValue: 5 })
+      .expect(400);
+
+    // 3.3 Editar atributos permitidos (título, prioridade) preserva type e regras de domínio
+    const editGoalRes = await request(app.getHttpServer())
+      .patch(`/api/goals/${goal2Id}`)
+      .send({
+        title: 'Ler 50 páginas de livro atualizado',
+        priority: 'HIGH',
+      })
+      .expect(200);
+    expect(editGoalRes.body.title).toBe('Ler 50 páginas de livro atualizado');
+    expect(editGoalRes.body.type).toBe('QUANTITY');
+    expect(editGoalRes.body.priority).toBe('HIGH');
+    expect(editGoalRes.body.targetValue).toBe(50);
+
     // 4. Ativar semana
     const activateRes = await request(app.getHttpServer())
       .post(`/api/weeks/${weekId}/activate`)

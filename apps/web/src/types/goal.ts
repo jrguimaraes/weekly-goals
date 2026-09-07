@@ -36,7 +36,6 @@ export interface UpdateGoalInput {
   categoryId?: string;
   title?: string;
   description?: string;
-  type?: GoalType;
   priority?: GoalPriority;
   targetValue?: number;
 }

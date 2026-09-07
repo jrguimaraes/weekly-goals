@@ -623,6 +623,62 @@ describe('GoalsService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
+    it('deve rejeitar tentativa de alterar o type de QUANTITY para BINARY com BadRequestException', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+
+      await expect(
+        service.update('goal-1', { type: GoalType.BINARY } as any),
+      ).rejects.toThrow(
+        new BadRequestException('O tipo da meta não pode ser alterado após a criação.'),
+      );
+    });
+
+    it('deve rejeitar tentativa de alterar o type de BINARY para QUANTITY com BadRequestException', async () => {
+      const mockGoalBinary = {
+        ...mockGoalQuantity,
+        type: GoalType.BINARY,
+        targetValue: 1,
+        currentValue: 0,
+        status: GoalStatus.PENDING,
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalBinary);
+
+      await expect(
+        service.update('goal-1', { type: GoalType.QUANTITY } as any),
+      ).rejects.toThrow(
+        new BadRequestException('O tipo da meta não pode ser alterado após a criação.'),
+      );
+    });
+
+    it('deve atualizar titulo, descricao e prioridade mantendo o type e valores originais intactos', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+      vi.spyOn(prismaService.goal, 'update').mockResolvedValue({
+        ...mockGoalQuantity,
+        title: 'Novo Título',
+        description: 'Nova Descrição',
+        priority: GoalPriority.LOW,
+      });
+
+      const result = await service.update('goal-1', {
+        title: 'Novo Título',
+        description: 'Nova Descrição',
+        priority: GoalPriority.LOW,
+      });
+
+      expect(prismaService.goal.update).toHaveBeenCalledWith({
+        where: { id: 'goal-1' },
+        data: {
+          title: 'Novo Título',
+          description: 'Nova Descrição',
+          priority: GoalPriority.LOW,
+        },
+        include: { category: true },
+      });
+      expect(result.type).toBe(mockGoalQuantity.type);
+      expect(result.targetValue).toBe(mockGoalQuantity.targetValue);
+      expect(result.currentValue).toBe(mockGoalQuantity.currentValue);
+    });
+
     it('deve rejeitar targetValue menor ou igual a zero para meta QUANTITY', async () => {
       vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
 

@@ -170,17 +170,25 @@ export class GoalsService {
       }
     }
 
-    const targetType = dto.type ?? goal.type;
+    if (
+      (dto as { type?: GoalType }).type !== undefined &&
+      (dto as { type?: GoalType }).type !== goal.type
+    ) {
+      throw new BadRequestException(
+        'O tipo da meta não pode ser alterado após a criação.',
+      );
+    }
+
     let targetValue = goal.targetValue;
 
-    if (targetType === GoalType.BINARY) {
+    if (goal.type === GoalType.BINARY) {
       if (dto.targetValue !== undefined && dto.targetValue !== 1) {
         throw new BadRequestException(
           'Para metas do tipo BINARY, targetValue deve ser 1.',
         );
       }
       targetValue = 1;
-    } else if (targetType === GoalType.QUANTITY) {
+    } else if (goal.type === GoalType.QUANTITY) {
       if (dto.targetValue !== undefined) {
         if (dto.targetValue <= 0) {
           throw new BadRequestException(
@@ -189,8 +197,6 @@ export class GoalsService {
         }
         targetValue = dto.targetValue;
       }
-    } else {
-      throw new BadRequestException('Tipo de meta inválido.');
     }
 
     let status = goal.status;
@@ -211,7 +217,6 @@ export class GoalsService {
       categoryId?: string;
       title?: string;
       description?: string | null;
-      type?: GoalType;
       priority?: GoalPriority;
       targetValue?: number;
       status?: GoalStatus;
@@ -226,9 +231,6 @@ export class GoalsService {
     }
     if (dto.description !== undefined) {
       data.description = dto.description ? dto.description.trim() : null;
-    }
-    if (dto.type !== undefined) {
-      data.type = dto.type;
     }
     if (dto.priority !== undefined) {
       data.priority = dto.priority;

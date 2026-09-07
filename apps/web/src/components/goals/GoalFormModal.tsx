@@ -83,7 +83,6 @@ function GoalFormContent({
           categoryId,
           title: title.trim(),
           description: description.trim() ? description.trim() : undefined,
-          type,
           priority,
           targetValue: parsedTarget,
         };
@@ -181,6 +180,7 @@ function GoalFormContent({
           <select
             id="goal-type"
             value={type}
+            disabled={isEditing}
             onChange={(e) => {
               const newType = e.target.value as GoalType;
               setType(newType);
@@ -190,15 +190,19 @@ function GoalFormContent({
                 setTargetValue('5');
               }
             }}
-            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className={`mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
+              isEditing ? 'cursor-not-allowed bg-slate-100 text-slate-500' : 'bg-white'
+            }`}
           >
             <option value="BINARY">Binária (Sim/Não)</option>
             <option value="QUANTITY">Quantitativa (Numérica)</option>
           </select>
           <p className="mt-1 text-xs text-slate-500">
-            {type === 'BINARY'
-              ? 'Conclusão sim/não (alvo fixado em 1).'
-              : 'Progresso acumulado com meta numérica.'}
+            {isEditing
+              ? 'O tipo da meta não pode ser alterado após a criação.'
+              : type === 'BINARY'
+                ? 'Conclusão sim/não (alvo fixado em 1).'
+                : 'Progresso acumulado com meta numérica.'}
           </p>
         </div>
 
