@@ -1,9 +1,10 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, WeekReport } from '@prisma/client';
+import { Prisma, WeekReport, WeekStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { REPORT_SCHEMA_VERSION, ReportSnapshot } from './reports.types.js';
 
@@ -58,4 +59,37 @@ export class ReportsService {
 
     return report;
   }
+
+  /**
+   * Obtém o snapshot imutável do relatório de uma semana fechada.
+   * Valida existência e estado da semana, retornando o snapshot estático sem recálculo.
+   */
+  async getReport(weekId: string): Promise<ReportSnapshot> {
+    const week = await this.prisma.week.findUnique({
+      where: { id: weekId },
+    });
+
+    if (!week) {
+      throw new NotFoundException(`Semana com id "${weekId}" não encontrada.`);
+    }
+
+    if (week.status !== WeekStatus.CLOSED) {
+      throw new BadRequestException(
+        `Apenas semanas fechadas possuem relatório disponível. Status atual: ${week.status}.`,
+      );
+    }
+
+    const report = await this.prisma.weekReport.findUnique({
+      where: { weekId },
+    });
+
+    if (!report) {
+      throw new NotFoundException(
+        `Relatório da semana "${weekId}" não encontrado.`,
+      );
+    }
+
+    return report.snapshot as unknown as ReportSnapshot;
+  }
 }
+

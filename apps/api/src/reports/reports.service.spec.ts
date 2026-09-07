@@ -1,5 +1,10 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { WeekStatus } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ReportsService } from './reports.service.js';
@@ -18,6 +23,9 @@ describe('ReportsService', () => {
           useValue: {
             weekReport: {
               create: vi.fn(),
+              findUnique: vi.fn(),
+            },
+            week: {
               findUnique: vi.fn(),
             },
           },
@@ -174,4 +182,73 @@ describe('ReportsService', () => {
       );
     });
   });
+
+  describe('getReport', () => {
+    const closedWeek = {
+      id: 'week-1',
+      startDate: new Date('2026-09-07T00:00:00.000Z'),
+      endDate: new Date('2026-09-13T00:00:00.000Z'),
+      status: WeekStatus.CLOSED,
+      closedAt: new Date(),
+    };
+
+    it('deve retornar o snapshot salvo para uma semana com status CLOSED', async () => {
+      const mockReport = {
+        id: 'report-1',
+        weekId: 'week-1',
+        version: 1,
+        snapshot: mockSnapshot,
+        generatedAt: new Date(),
+      };
+
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(closedWeek as any);
+      vi.spyOn(prismaService.weekReport, 'findUnique').mockResolvedValue(mockReport as any);
+
+      const result = await service.getReport('week-1');
+
+      expect(prismaService.week.findUnique).toHaveBeenCalledWith({
+        where: { id: 'week-1' },
+      });
+      expect(prismaService.weekReport.findUnique).toHaveBeenCalledWith({
+        where: { weekId: 'week-1' },
+      });
+      expect(result).toEqual(mockSnapshot);
+    });
+
+    it('deve lançar NotFoundException quando a semana não for encontrada', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(null);
+
+      await expect(service.getReport('inexistente')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('deve lançar BadRequestException quando a semana estiver em status DRAFT', async () => {
+      const draftWeek = { ...closedWeek, status: WeekStatus.DRAFT, closedAt: null };
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek as any);
+
+      await expect(service.getReport('week-1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('deve lançar BadRequestException quando a semana estiver em status ACTIVE', async () => {
+      const activeWeek = { ...closedWeek, status: WeekStatus.ACTIVE, closedAt: null };
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(activeWeek as any);
+
+      await expect(service.getReport('week-1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('deve lançar NotFoundException quando a semana estiver CLOSED mas não possuir relatório salvo', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(closedWeek as any);
+      vi.spyOn(prismaService.weekReport, 'findUnique').mockResolvedValue(null);
+
+      await expect(service.getReport('week-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
 });
+
