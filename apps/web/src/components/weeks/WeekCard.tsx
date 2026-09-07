@@ -93,9 +93,17 @@ export function WeekCard({
           )}
 
           {isClosed && (
-            <span className="inline-flex items-center text-xs font-medium text-slate-500 bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
-              Histórico
-            </span>
+            <>
+              <Link
+                href={`/weeks/${week.id}/report`}
+                className="inline-flex items-center justify-center rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-1.5 text-xs font-semibold text-indigo-700 shadow-xs hover:bg-indigo-100 transition-colors"
+              >
+                Ver Relatório
+              </Link>
+              <span className="inline-flex items-center text-xs font-medium text-slate-500 bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
+                Histórico
+              </span>
+            </>
           )}
         </div>
       </div>

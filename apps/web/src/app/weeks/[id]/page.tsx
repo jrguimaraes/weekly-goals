@@ -282,10 +282,20 @@ export default function WeekGoalsPage() {
 
       {/* Alertas contextuais de status */}
       {isClosed && (
-        <Alert
-          variant="info"
-          message="Esta semana está encerrada. Os dados e metas estão congelados em modo histórico para relatórios e não podem ser alterados."
-        />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
+          <div className="space-y-0.5">
+            <span className="text-xs font-bold text-indigo-900">Relatório Consolidado Disponível</span>
+            <p className="text-xs text-indigo-700">
+              Esta semana está encerrada e seu snapshot consolidado de produtividade está disponível para consulta e impressão.
+            </p>
+          </div>
+          <Link
+            href={`/weeks/${week.id}/report`}
+            className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors shrink-0"
+          >
+            Visualizar Relatório
+          </Link>
+        </div>
       )}
       {week.status === 'DRAFT' && (
         <Alert
