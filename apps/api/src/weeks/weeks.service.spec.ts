@@ -4,17 +4,27 @@ import { GoalStatus, GoalType, WeekStatus } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MetricsService } from '../metrics/metrics.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ReportsService } from '../reports/reports.service.js';
+import { REPORT_SCHEMA_VERSION } from '../reports/reports.types.js';
 import { WeeksService } from './weeks.service.js';
 
 describe('WeeksService', () => {
   let service: WeeksService;
   let prismaService: PrismaService;
+  let reportsService: ReportsService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WeeksService,
         MetricsService,
+        {
+          provide: ReportsService,
+          useValue: {
+            create: vi.fn(),
+            findByWeekId: vi.fn(),
+          },
+        },
         {
           provide: PrismaService,
           useValue: {
@@ -31,6 +41,7 @@ describe('WeeksService', () => {
             category: {
               findMany: vi.fn(),
             },
+            $transaction: vi.fn(),
           },
         },
       ],
@@ -38,6 +49,7 @@ describe('WeeksService', () => {
 
     service = module.get<WeeksService>(WeeksService);
     prismaService = module.get<PrismaService>(PrismaService);
+    reportsService = module.get<ReportsService>(ReportsService);
   });
 
   it('deve estar definido', () => {
@@ -418,4 +430,190 @@ describe('WeeksService', () => {
       );
     });
   });
+
+  describe('close', () => {
+    const activeWeek = {
+      id: 'week-1',
+      startDate: new Date('2026-09-07T00:00:00.000Z'),
+      endDate: new Date('2026-09-13T00:00:00.000Z'),
+      status: WeekStatus.ACTIVE,
+      closedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const mockGoals = [
+      {
+        id: 'goal-1',
+        weekId: 'week-1',
+        categoryId: 'cat-1',
+        title: 'Meta 1',
+        description: 'Desc 1',
+        type: GoalType.BINARY,
+        priority: 'HIGH',
+        targetValue: 1,
+        currentValue: 1,
+        status: GoalStatus.COMPLETED,
+        completedAt: new Date('2026-09-08T10:00:00.000Z'),
+        category: { id: 'cat-1', name: 'Saúde' },
+      },
+      {
+        id: 'goal-2',
+        weekId: 'week-1',
+        categoryId: 'cat-1',
+        title: 'Meta 2',
+        description: null,
+        type: GoalType.QUANTITY,
+        priority: 'MEDIUM',
+        targetValue: 10,
+        currentValue: 5,
+        status: GoalStatus.IN_PROGRESS,
+        completedAt: null,
+        category: { id: 'cat-1', name: 'Saúde' },
+      },
+    ];
+
+    const mockCategories = [
+      { id: 'cat-1', name: 'Saúde', position: 0, isActive: true },
+    ];
+
+    it('deve fechar uma semana ACTIVE com sucesso, atualizando status para CLOSED e persistindo relatório via transação', async () => {
+      const closedWeek = {
+        ...activeWeek,
+        status: WeekStatus.CLOSED,
+        closedAt: new Date(),
+      };
+
+      const mockTx = {
+        goal: {
+          findMany: vi.fn().mockResolvedValue(mockGoals),
+        },
+        category: {
+          findMany: vi.fn().mockResolvedValue(mockCategories),
+        },
+        week: {
+          update: vi.fn().mockResolvedValue(closedWeek),
+        },
+      };
+
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(activeWeek);
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(mockTx));
+      vi.spyOn(reportsService, 'create').mockResolvedValue({
+        id: 'report-1',
+        weekId: 'week-1',
+        version: REPORT_SCHEMA_VERSION,
+        snapshot: {} as any,
+        generatedAt: new Date(),
+      });
+
+      const result = await service.close('week-1');
+
+      expect(prismaService.week.findUnique).toHaveBeenCalledWith({
+        where: { id: 'week-1' },
+      });
+      expect(mockTx.goal.findMany).toHaveBeenCalledWith({
+        where: { weekId: 'week-1' },
+        include: { category: true },
+        orderBy: { createdAt: 'asc' },
+      });
+      expect(mockTx.category.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [{ isActive: true }, { goals: { some: { weekId: 'week-1' } } }],
+        },
+        orderBy: [{ position: 'asc' }, { name: 'asc' }],
+      });
+      expect(mockTx.week.update).toHaveBeenCalledWith({
+        where: { id: 'week-1' },
+        data: {
+          status: WeekStatus.CLOSED,
+          closedAt: expect.any(Date),
+        },
+      });
+      expect(reportsService.create).toHaveBeenCalledWith(
+        'week-1',
+        expect.objectContaining({
+          version: REPORT_SCHEMA_VERSION,
+          generatedAt: expect.any(String),
+          totalGoals: 2,
+          completedGoals: 1,
+          completionRate: 50,
+          progressRate: 75,
+          goals: expect.arrayContaining([
+            expect.objectContaining({
+              id: 'goal-1',
+              title: 'Meta 1',
+              status: GoalStatus.COMPLETED,
+              categoryName: 'Saúde',
+            }),
+            expect.objectContaining({
+              id: 'goal-2',
+              title: 'Meta 2',
+              status: GoalStatus.IN_PROGRESS,
+              categoryName: 'Saúde',
+            }),
+          ]),
+        }),
+        REPORT_SCHEMA_VERSION,
+        mockTx,
+      );
+      expect(result).toEqual(closedWeek);
+    });
+
+    it('deve lançar NotFoundException quando a semana não existir', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(null);
+
+      await expect(service.close('inexistente')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('deve lançar ConflictException quando a semana já estiver CLOSED', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue({
+        ...activeWeek,
+        status: WeekStatus.CLOSED,
+      });
+
+      await expect(service.close('week-1')).rejects.toThrow(
+        new ConflictException('A semana já está fechada.'),
+      );
+    });
+
+    it('deve lançar ConflictException quando a semana estiver em DRAFT', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue({
+        ...activeWeek,
+        status: WeekStatus.DRAFT,
+      });
+
+      await expect(service.close('week-1')).rejects.toThrow(
+        new ConflictException(
+          'Apenas semanas com status ACTIVE podem ser fechadas. Status atual: DRAFT.',
+        ),
+      );
+    });
+
+    it('deve propagar erro e abortar transação se a persistência do relatório falhar', async () => {
+      const mockTx = {
+        goal: {
+          findMany: vi.fn().mockResolvedValue(mockGoals),
+        },
+        category: {
+          findMany: vi.fn().mockResolvedValue(mockCategories),
+        },
+        week: {
+          update: vi.fn().mockResolvedValue({ ...activeWeek, status: WeekStatus.CLOSED }),
+        },
+      };
+
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(activeWeek);
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(mockTx));
+      vi.spyOn(reportsService, 'create').mockRejectedValue(
+        new Error('Erro ao salvar relatório'),
+      );
+
+      await expect(service.close('week-1')).rejects.toThrow(
+        'Erro ao salvar relatório',
+      );
+    });
+  });
 });
+

@@ -8,6 +8,12 @@ import { Week, WeekStatus } from '@prisma/client';
 import { MetricsService } from '../metrics/metrics.service.js';
 import { WeekSummaryResponse } from '../metrics/metrics.types.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ReportsService } from '../reports/reports.service.js';
+import {
+  GoalSnapshot,
+  REPORT_SCHEMA_VERSION,
+  ReportSnapshot,
+} from '../reports/reports.types.js';
 import { CreateWeekDto } from './dto/create-week.dto.js';
 import { ListWeeksQueryDto } from './dto/list-weeks-query.dto.js';
 
@@ -44,6 +50,7 @@ export class WeeksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly metricsService: MetricsService,
+    private readonly reportsService: ReportsService,
   ) {}
 
   async create(dto: CreateWeekDto): Promise<Week> {
@@ -126,6 +133,82 @@ export class WeeksService {
       data: {
         status: WeekStatus.ACTIVE,
       },
+    });
+  }
+
+  async close(id: string): Promise<Week> {
+    const week = await this.findById(id);
+
+    if (week.status === WeekStatus.CLOSED) {
+      throw new ConflictException('A semana já está fechada.');
+    }
+
+    if (week.status !== WeekStatus.ACTIVE) {
+      throw new ConflictException(
+        `Apenas semanas com status ACTIVE podem ser fechadas. Status atual: ${week.status}.`,
+      );
+    }
+
+    const closedAt = new Date();
+
+    return this.prisma.$transaction(async (tx) => {
+      const goals = await tx.goal.findMany({
+        where: { weekId: id },
+        include: { category: true },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      const categories = await tx.category.findMany({
+        where: {
+          OR: [{ isActive: true }, { goals: { some: { weekId: id } } }],
+        },
+        orderBy: [{ position: 'asc' }, { name: 'asc' }],
+      });
+
+      const closedWeekState: Week = {
+        ...week,
+        status: WeekStatus.CLOSED,
+        closedAt,
+      };
+
+      const summary = this.metricsService.buildWeekSummary(
+        closedWeekState,
+        goals,
+        categories,
+      );
+
+      const goalSnapshots: GoalSnapshot[] = goals.map((goal) => ({
+        id: goal.id,
+        title: goal.title,
+        description: goal.description,
+        type: goal.type,
+        priority: goal.priority,
+        targetValue: goal.targetValue,
+        currentValue: goal.currentValue,
+        status: goal.status,
+        completedAt: goal.completedAt ? goal.completedAt.toISOString() : null,
+        categoryId: goal.categoryId,
+        categoryName: goal.category?.name,
+      }));
+
+      const snapshot: ReportSnapshot = {
+        ...summary,
+        version: REPORT_SCHEMA_VERSION,
+        generatedAt: closedAt.toISOString(),
+        goals: goalSnapshots,
+      };
+
+      const updatedWeek = await tx.week.update({
+        where: { id },
+        data: {
+          status: WeekStatus.CLOSED,
+          closedAt,
+        },
+      });
+
+      await this.reportsService.create(id, snapshot, REPORT_SCHEMA_VERSION, tx);
+
+      return updatedWeek;
     });
   }
 

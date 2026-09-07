@@ -19,6 +19,7 @@ describe('WeeksController', () => {
             findAll: vi.fn(),
             findById: vi.fn(),
             activate: vi.fn(),
+            close: vi.fn(),
             getSummary: vi.fn(),
           },
         },
@@ -161,4 +162,26 @@ describe('WeeksController', () => {
       expect(result).toEqual(mockSummary);
     });
   });
+
+  describe('close', () => {
+    it('deve delegar o fechamento para o WeeksService', async () => {
+      const mockResult = {
+        id: 'week-1',
+        startDate: new Date('2026-09-07T00:00:00.000Z'),
+        endDate: new Date('2026-09-13T00:00:00.000Z'),
+        status: WeekStatus.CLOSED,
+        closedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.spyOn(service, 'close').mockResolvedValue(mockResult);
+
+      const result = await controller.close('week-1');
+
+      expect(service.close).toHaveBeenCalledWith('week-1');
+      expect(result).toEqual(mockResult);
+    });
+  });
 });
+

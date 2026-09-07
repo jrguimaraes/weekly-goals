@@ -63,6 +63,7 @@ describe('ReportsService', () => {
         progressRate: 100,
       },
     ],
+    goals: [],
   };
 
   describe('create', () => {

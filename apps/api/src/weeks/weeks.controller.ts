@@ -29,6 +29,12 @@ export class WeeksController {
     return this.weeksService.activate(id);
   }
 
+  @Post(':id/close')
+  @HttpCode(HttpStatus.OK)
+  async close(@Param('id') id: string): Promise<Week> {
+    return this.weeksService.close(id);
+  }
+
   @Get()
   async findAll(@Query() query: ListWeeksQueryDto): Promise<Week[]> {
     return this.weeksService.findAll(query);
