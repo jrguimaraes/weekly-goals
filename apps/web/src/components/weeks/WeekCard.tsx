@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { WeekStatusBadge } from './WeekStatusBadge';
 import { formatDate, formatDateRange } from '../../lib/date-utils';
 import type { Week } from '../../types/week';
@@ -54,6 +55,13 @@ export function WeekCard({
         </div>
 
         <div className="flex items-center gap-2 pt-2 sm:pt-0">
+          <Link
+            href={`/weeks/${week.id}`}
+            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+          >
+            {isClosed ? 'Ver Metas' : 'Gerenciar Metas'}
+          </Link>
+
           {isDraft && (
             <button
               type="button"
