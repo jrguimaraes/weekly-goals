@@ -27,14 +27,15 @@ enum WeekStatus {
 }
 
 model Week {
-  id        String     @id @default(uuid())
-  startDate DateTime   @db.Date
-  endDate   DateTime   @db.Date
-  status    WeekStatus @default(DRAFT)
+  id        String      @id @default(uuid())
+  startDate DateTime    @db.Date
+  endDate   DateTime    @db.Date
+  status    WeekStatus  @default(DRAFT)
   closedAt  DateTime?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
   goals     Goal[]
+  report    WeekReport?
 
   @@map("weeks")
 }
@@ -79,3 +80,14 @@ model Goal {
   @@map("goals")
 }
 
+model WeekReport {
+  id          String   @id @default(uuid())
+  weekId      String   @unique
+  version     Int      @default(1)
+  snapshot    Json
+  generatedAt DateTime @default(now())
+
+  week Week @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  @@map("week_reports")
+}
