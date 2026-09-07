@@ -196,10 +196,16 @@ export default function HomePage() {
                 O último ciclo semanal foi encerrado. Crie uma nova semana em planejamento para
                 organizar suas próximas metas.
               </p>
-              <div className="pt-2">
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href="/history"
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+                >
+                  Consultar Histórico de Ciclos
+                </Link>
                 <Link
                   href="/weeks"
-                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors"
+                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors"
                 >
                   Criar Novo Ciclo Semanal
                 </Link>
