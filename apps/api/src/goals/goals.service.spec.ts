@@ -29,6 +29,8 @@ describe('GoalsService', () => {
               findUnique: vi.fn(),
               findMany: vi.fn(),
               create: vi.fn(),
+              update: vi.fn(),
+              delete: vi.fn(),
             },
             week: {
               findUnique: vi.fn(),
@@ -434,6 +436,357 @@ describe('GoalsService', () => {
       await expect(service.findByWeekId('inexistente')).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('update', () => {
+    const mockWeekDraft = {
+      id: 'week-1',
+      startDate: new Date('2026-09-07'),
+      endDate: new Date('2026-09-13'),
+      status: WeekStatus.DRAFT,
+      closedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const mockWeekActive = {
+      ...mockWeekDraft,
+      status: WeekStatus.ACTIVE,
+    };
+
+    const mockWeekClosed = {
+      ...mockWeekDraft,
+      status: WeekStatus.CLOSED,
+      closedAt: new Date(),
+    };
+
+    const mockCategory = {
+      id: 'cat-1',
+      name: 'Saúde',
+      description: null,
+      position: 0,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const mockGoalQuantity = {
+      id: 'goal-1',
+      weekId: 'week-1',
+      categoryId: 'cat-1',
+      title: 'Correr 10km',
+      description: 'Na praia',
+      type: GoalType.QUANTITY,
+      priority: GoalPriority.MEDIUM,
+      targetValue: 10,
+      currentValue: 5,
+      status: GoalStatus.IN_PROGRESS,
+      completedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      week: mockWeekDraft,
+      category: mockCategory,
+    };
+
+    it('deve atualizar com sucesso titulo e descricao de uma meta em semana DRAFT', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+      vi.spyOn(prismaService.goal, 'update').mockResolvedValue({
+        ...mockGoalQuantity,
+        title: 'Correr 12km',
+        description: 'No parque',
+      });
+
+      const result = await service.update('goal-1', {
+        title: '  Correr 12km  ',
+        description: '  No parque  ',
+      });
+
+      expect(prismaService.goal.update).toHaveBeenCalledWith({
+        where: { id: 'goal-1' },
+        data: {
+          title: 'Correr 12km',
+          description: 'No parque',
+        },
+        include: { category: true },
+      });
+      expect(result.title).toBe('Correr 12km');
+    });
+
+    it('deve permitir atualizar meta em semana ACTIVE', async () => {
+      const goalInActiveWeek = {
+        ...mockGoalQuantity,
+        week: mockWeekActive,
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(goalInActiveWeek);
+      vi.spyOn(prismaService.goal, 'update').mockResolvedValue({
+        ...goalInActiveWeek,
+        priority: GoalPriority.HIGH,
+      });
+
+      const result = await service.update('goal-1', {
+        priority: GoalPriority.HIGH,
+      });
+
+      expect(prismaService.goal.update).toHaveBeenCalledWith({
+        where: { id: 'goal-1' },
+        data: { priority: GoalPriority.HIGH },
+        include: { category: true },
+      });
+      expect(result.priority).toBe(GoalPriority.HIGH);
+    });
+
+    it('deve rejeitar atualizacao em semana CLOSED com ConflictException', async () => {
+      const goalInClosedWeek = {
+        ...mockGoalQuantity,
+        week: mockWeekClosed,
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(goalInClosedWeek);
+
+      await expect(
+        service.update('goal-1', { title: 'Novo título' }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('deve lancar NotFoundException se a meta nao existir ao atualizar', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(null);
+
+      await expect(
+        service.update('inexistente', { title: 'Novo título' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('deve atualizar categoria quando ela existir e estiver ativa', async () => {
+      const newCategory = {
+        id: 'cat-2',
+        name: 'Estudos',
+        description: null,
+        position: 1,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+      vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(newCategory);
+      vi.spyOn(prismaService.goal, 'update').mockResolvedValue({
+        ...mockGoalQuantity,
+        categoryId: 'cat-2',
+        category: newCategory,
+      });
+
+      const result = await service.update('goal-1', { categoryId: 'cat-2' });
+
+      expect(prismaService.category.findUnique).toHaveBeenCalledWith({
+        where: { id: 'cat-2' },
+      });
+      expect(prismaService.goal.update).toHaveBeenCalledWith({
+        where: { id: 'goal-1' },
+        data: { categoryId: 'cat-2' },
+        include: { category: true },
+      });
+      expect(result.categoryId).toBe('cat-2');
+    });
+
+    it('deve lancar NotFoundException ao tentar associar categoria inexistente', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+      vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(null);
+
+      await expect(
+        service.update('goal-1', { categoryId: 'cat-inexistente' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('deve lancar BadRequestException ao tentar associar categoria inativa', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+      vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue({
+        ...mockCategory,
+        isActive: false,
+      });
+
+      await expect(
+        service.update('goal-1', { categoryId: 'cat-1' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve rejeitar targetValue diferente de 1 para meta BINARY', async () => {
+      const mockGoalBinary = {
+        ...mockGoalQuantity,
+        type: GoalType.BINARY,
+        targetValue: 1,
+        currentValue: 0,
+        status: GoalStatus.PENDING,
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalBinary);
+
+      await expect(
+        service.update('goal-1', { targetValue: 5 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve rejeitar targetValue menor ou igual a zero para meta QUANTITY', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+
+      await expect(
+        service.update('goal-1', { targetValue: 0 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve ajustar status para COMPLETED quando targetValue for reduzido para menor ou igual a currentValue', async () => {
+      // currentValue é 5, novo targetValue é 4 -> meta concluída
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+      vi.spyOn(prismaService.goal, 'update').mockImplementation(async (args) => ({
+        ...mockGoalQuantity,
+        ...args.data,
+      } as any));
+
+      const result = await service.update('goal-1', { targetValue: 4 });
+
+      expect(result.status).toBe(GoalStatus.COMPLETED);
+      expect(result.targetValue).toBe(4);
+      expect(result.completedAt).toBeInstanceOf(Date);
+    });
+
+    it('deve ajustar status para IN_PROGRESS e limpar completedAt quando targetValue for aumentado acima de currentValue', async () => {
+      // meta estava COMPLETED com currentValue 10 e targetValue 10
+      const completedGoal = {
+        ...mockGoalQuantity,
+        targetValue: 10,
+        currentValue: 10,
+        status: GoalStatus.COMPLETED,
+        completedAt: new Date(),
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(completedGoal);
+      vi.spyOn(prismaService.goal, 'update').mockImplementation(async (args) => ({
+        ...completedGoal,
+        ...args.data,
+      } as any));
+
+      const result = await service.update('goal-1', { targetValue: 15 });
+
+      expect(result.status).toBe(GoalStatus.IN_PROGRESS);
+      expect(result.targetValue).toBe(15);
+      expect(result.completedAt).toBeNull();
+    });
+
+    it('deve manter status PENDING e completedAt nulo quando currentValue for 0', async () => {
+      const pendingGoal = {
+        ...mockGoalQuantity,
+        currentValue: 0,
+        status: GoalStatus.PENDING,
+        completedAt: null,
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(pendingGoal);
+      vi.spyOn(prismaService.goal, 'update').mockImplementation(async (args) => ({
+        ...pendingGoal,
+        ...args.data,
+      } as any));
+
+      const result = await service.update('goal-1', { targetValue: 20 });
+
+      expect(result.status).toBe(GoalStatus.PENDING);
+      expect(result.targetValue).toBe(20);
+      expect(result.completedAt).toBeNull();
+    });
+  });
+
+  describe('delete', () => {
+    const mockWeekDraft = {
+      id: 'week-1',
+      startDate: new Date('2026-09-07'),
+      endDate: new Date('2026-09-13'),
+      status: WeekStatus.DRAFT,
+      closedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const mockWeekActive = {
+      ...mockWeekDraft,
+      status: WeekStatus.ACTIVE,
+    };
+
+    const mockWeekClosed = {
+      ...mockWeekDraft,
+      status: WeekStatus.CLOSED,
+      closedAt: new Date(),
+    };
+
+    const mockGoal = {
+      id: 'goal-1',
+      weekId: 'week-1',
+      categoryId: 'cat-1',
+      title: 'Meta para remover',
+      description: null,
+      type: GoalType.BINARY,
+      priority: GoalPriority.LOW,
+      targetValue: 1,
+      currentValue: 0,
+      status: GoalStatus.PENDING,
+      completedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      week: mockWeekDraft,
+      category: {
+        id: 'cat-1',
+        name: 'Saúde',
+        description: null,
+        position: 0,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    };
+
+    it('deve remover meta de semana em DRAFT com sucesso', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoal);
+      vi.spyOn(prismaService.goal, 'delete').mockResolvedValue(mockGoal);
+
+      const result = await service.delete('goal-1');
+
+      expect(prismaService.goal.findUnique).toHaveBeenCalledWith({
+        where: { id: 'goal-1' },
+        include: { week: true },
+      });
+      expect(prismaService.goal.delete).toHaveBeenCalledWith({
+        where: { id: 'goal-1' },
+        include: { category: true },
+      });
+      expect(result).toEqual(mockGoal);
+    });
+
+    it('deve remover meta de semana em ACTIVE com sucesso', async () => {
+      const activeGoal = { ...mockGoal, week: mockWeekActive };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(activeGoal);
+      vi.spyOn(prismaService.goal, 'delete').mockResolvedValue(activeGoal);
+
+      const result = await service.delete('goal-1');
+
+      expect(result).toEqual(activeGoal);
+    });
+
+    it('deve rejeitar remocao de meta em semana CLOSED com ConflictException', async () => {
+      const closedGoal = { ...mockGoal, week: mockWeekClosed };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(closedGoal);
+
+      await expect(service.delete('goal-1')).rejects.toThrow(ConflictException);
+      expect(prismaService.goal.delete).not.toHaveBeenCalled();
+    });
+
+    it('deve lancar NotFoundException ao tentar remover meta inexistente', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(null);
+
+      await expect(service.delete('inexistente')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('deve permitir chamar remove como alias de delete', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoal);
+      vi.spyOn(prismaService.goal, 'delete').mockResolvedValue(mockGoal);
+
+      const result = await service.remove('goal-1');
+
+      expect(result).toEqual(mockGoal);
     });
   });
 });

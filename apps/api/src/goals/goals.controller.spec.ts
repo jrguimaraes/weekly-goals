@@ -17,6 +17,8 @@ describe('GoalsController', () => {
           useValue: {
             findById: vi.fn(),
             findByWeekId: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
           },
         },
       ],
@@ -54,6 +56,61 @@ describe('GoalsController', () => {
 
       expect(service.findById).toHaveBeenCalledWith('goal-1');
       expect(result).toEqual(mockGoal);
+    });
+  });
+
+  describe('update', () => {
+    it('deve delegar a atualizacao de meta para o GoalsService', async () => {
+      const dto = { title: 'Correr 15km', targetValue: 15 };
+      const updatedGoal = {
+        id: 'goal-1',
+        weekId: 'week-1',
+        categoryId: 'cat-1',
+        title: 'Correr 15km',
+        description: null,
+        type: GoalType.QUANTITY,
+        priority: GoalPriority.HIGH,
+        targetValue: 15,
+        currentValue: 0,
+        status: GoalStatus.PENDING,
+        completedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.spyOn(service, 'update').mockResolvedValue(updatedGoal);
+
+      const result = await controller.update('goal-1', dto);
+
+      expect(service.update).toHaveBeenCalledWith('goal-1', dto);
+      expect(result).toEqual(updatedGoal);
+    });
+  });
+
+  describe('delete', () => {
+    it('deve delegar a remocao de meta para o GoalsService', async () => {
+      const deletedGoal = {
+        id: 'goal-1',
+        weekId: 'week-1',
+        categoryId: 'cat-1',
+        title: 'Correr 10km',
+        description: null,
+        type: GoalType.QUANTITY,
+        priority: GoalPriority.HIGH,
+        targetValue: 10,
+        currentValue: 0,
+        status: GoalStatus.PENDING,
+        completedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.spyOn(service, 'delete').mockResolvedValue(deletedGoal);
+
+      const result = await controller.delete('goal-1');
+
+      expect(service.delete).toHaveBeenCalledWith('goal-1');
+      expect(result).toEqual(deletedGoal);
     });
   });
 });
