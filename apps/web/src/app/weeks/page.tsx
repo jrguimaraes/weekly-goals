@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { weeksService } from '../../services/weeks.service';
 import { WeekList } from '../../components/weeks/WeekList';
 import { CreateWeekModal } from '../../components/weeks/CreateWeekModal';
 import { ActivateWeekModal } from '../../components/weeks/ActivateWeekModal';
+import { CloseWeekModal } from '../../components/weeks/CloseWeekModal';
 import { WeekStatusBadge } from '../../components/weeks/WeekStatusBadge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Alert } from '../../components/ui/Alert';
@@ -25,6 +27,7 @@ export default function WeeksPage() {
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activatingWeek, setActivatingWeek] = useState<Week | null>(null);
+  const [closingWeek, setClosingWeek] = useState<Week | null>(null);
 
   const loadWeeks = useCallback(async (currentFilter: FilterOption) => {
     setIsLoading(true);
@@ -92,6 +95,18 @@ export default function WeeksPage() {
   function handleActivateSuccess(activatedWeek: Week) {
     setFeedback({
       message: `Ciclo semanal (${formatDateRange(activatedWeek.startDate, activatedWeek.endDate)}) ativado com sucesso!`,
+      variant: 'success',
+    });
+    loadWeeks(filter);
+  }
+
+  function handleOpenClose(week: Week) {
+    setClosingWeek(week);
+  }
+
+  function handleCloseSuccess(closedWeek: Week) {
+    setFeedback({
+      message: `Ciclo semanal (${formatDateRange(closedWeek.startDate, closedWeek.endDate)}) encerrado com sucesso. Metas congeladas e relatório gerado.`,
       variant: 'success',
     });
     loadWeeks(filter);
@@ -176,11 +191,24 @@ export default function WeeksPage() {
                   Semana em andamento. O progresso das metas vinculadas a este ciclo está ativo.
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-white px-3 py-1.5 rounded-lg border border-emerald-200 shadow-2xs">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                   Ativa
                 </span>
+                <Link
+                  href={`/weeks/${activeWeek.id}`}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+                >
+                  Ver Metas
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => handleOpenClose(activeWeek)}
+                  className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 shadow-xs hover:bg-rose-50 transition-colors"
+                >
+                  Encerrar Semana
+                </button>
               </div>
             </div>
           ) : (
@@ -254,6 +282,7 @@ export default function WeeksPage() {
           <WeekList
             weeks={weeks}
             onActivate={handleOpenActivate}
+            onCloseWeek={handleOpenClose}
           />
         )}
       </section>
@@ -269,6 +298,13 @@ export default function WeeksPage() {
         onClose={() => setActivatingWeek(null)}
         week={activatingWeek}
         onSuccess={handleActivateSuccess}
+      />
+
+      <CloseWeekModal
+        isOpen={Boolean(closingWeek)}
+        onClose={() => setClosingWeek(null)}
+        week={closingWeek}
+        onSuccess={handleCloseSuccess}
       />
     </div>
   );

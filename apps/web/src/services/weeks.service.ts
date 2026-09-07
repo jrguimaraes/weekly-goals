@@ -22,4 +22,8 @@ export const weeksService = {
   async activate(id: string): Promise<Week> {
     return apiClient.post<Week>(`/weeks/${id}/activate`);
   },
+
+  async close(id: string): Promise<Week> {
+    return apiClient.post<Week>(`/weeks/${id}/close`);
+  },
 };

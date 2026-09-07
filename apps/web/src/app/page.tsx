@@ -8,6 +8,7 @@ import { WeekStatusBadge } from '../components/weeks/WeekStatusBadge';
 import { MetricsCard } from '../components/dashboard/MetricsCard';
 import { CategoryMetricsGrid } from '../components/dashboard/CategoryMetricsGrid';
 import { GoalCard } from '../components/goals/GoalCard';
+import { CloseWeekModal } from '../components/weeks/CloseWeekModal';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Alert } from '../components/ui/Alert';
 import { getApiErrorMessage } from '../lib/api-client';
@@ -24,6 +25,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
@@ -275,10 +277,17 @@ export default function HomePage() {
             </button>
             <Link
               href={`/weeks/${currentWeek.id}`}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
             >
               Gerenciar Metas
             </Link>
+            <button
+              type="button"
+              onClick={() => setIsCloseModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-rose-600 shadow-xs hover:bg-rose-50 transition-colors"
+            >
+              Encerrar Semana
+            </button>
           </div>
         </div>
       </div>
@@ -398,6 +407,17 @@ export default function HomePage() {
           </div>
         )}
       </section>
+
+      {/* Modal de Fechamento */}
+      <CloseWeekModal
+        isOpen={isCloseModalOpen}
+        onClose={() => setIsCloseModalOpen(false)}
+        week={currentWeek}
+        onSuccess={() => {
+          setIsCloseModalOpen(false);
+          loadDashboard();
+        }}
+      />
     </div>
   );
 }

@@ -7,9 +7,10 @@ import type { Week } from '../../types/week';
 interface WeekListProps {
   weeks: Week[];
   onActivate: (week: Week) => void;
+  onCloseWeek?: (week: Week) => void;
 }
 
-export function WeekList({ weeks, onActivate }: WeekListProps) {
+export function WeekList({ weeks, onActivate, onCloseWeek }: WeekListProps) {
   if (weeks.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
@@ -40,6 +41,7 @@ export function WeekList({ weeks, onActivate }: WeekListProps) {
           key={week.id}
           week={week}
           onActivate={onActivate}
+          onCloseWeek={onCloseWeek}
         />
       ))}
     </div>

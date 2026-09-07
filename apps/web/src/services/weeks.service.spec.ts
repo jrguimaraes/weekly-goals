@@ -89,4 +89,18 @@ describe('weeksService', () => {
     expect(result).toEqual(mockSummary);
     expect(apiClient.get).toHaveBeenCalledWith('/weeks/w-1/summary');
   });
+
+  it('deve fechar uma semana via POST /weeks/:id/close', async () => {
+    const mockClosed = {
+      id: 'w-1',
+      status: 'CLOSED',
+      closedAt: '2026-09-13T23:59:59Z',
+    };
+    vi.mocked(apiClient.post).mockResolvedValue(mockClosed);
+
+    const result = await weeksService.close('w-1');
+
+    expect(result).toEqual(mockClosed);
+    expect(apiClient.post).toHaveBeenCalledWith('/weeks/w-1/close');
+  });
 });

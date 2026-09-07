@@ -10,6 +10,7 @@ import { WeekStatusBadge } from '../../../components/weeks/WeekStatusBadge';
 import { GoalList } from '../../../components/goals/GoalList';
 import { GoalFormModal } from '../../../components/goals/GoalFormModal';
 import { DeleteGoalModal } from '../../../components/goals/DeleteGoalModal';
+import { CloseWeekModal } from '../../../components/weeks/CloseWeekModal';
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner';
 import { Alert } from '../../../components/ui/Alert';
 import { getApiErrorMessage } from '../../../lib/api-client';
@@ -37,6 +38,7 @@ export default function WeekGoalsPage() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [deletingGoal, setDeletingGoal] = useState<Goal | null>(null);
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
   const loadData = useCallback(
     async (catId: string, status: string) => {
@@ -159,6 +161,14 @@ export default function WeekGoalsPage() {
     }
   }
 
+  function handleCloseWeekSuccess(closedWeek: Week) {
+    setWeek(closedWeek);
+    setFeedback({
+      message: 'Ciclo semanal encerrado com sucesso. Metas permanentemente congeladas e snapshot do relatório consolidado.',
+      variant: 'info',
+    });
+  }
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-24">
@@ -237,25 +247,36 @@ export default function WeekGoalsPage() {
         </div>
 
         {!isClosed && (
-          <button
-            type="button"
-            onClick={handleOpenCreate}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+          <div className="flex flex-wrap items-center gap-3">
+            {week.status === 'ACTIVE' && (
+              <button
+                type="button"
+                onClick={() => setIsCloseModalOpen(true)}
+                className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white px-3.5 py-2 text-xs font-semibold text-rose-600 shadow-xs hover:bg-rose-50 transition-colors"
+              >
+                Encerrar Semana
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors"
             >
-              <path
-                fillRule="evenodd"
-                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Nova Meta
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Nova Meta
+            </button>
+          </div>
         )}
       </div>
 
@@ -343,6 +364,14 @@ export default function WeekGoalsPage() {
         onClose={() => setDeletingGoal(null)}
         goal={deletingGoal}
         onSuccess={handleDeleteSuccess}
+      />
+
+      {/* Modal de Fechamento */}
+      <CloseWeekModal
+        isOpen={isCloseModalOpen}
+        onClose={() => setIsCloseModalOpen(false)}
+        week={week}
+        onSuccess={handleCloseWeekSuccess}
       />
     </div>
   );

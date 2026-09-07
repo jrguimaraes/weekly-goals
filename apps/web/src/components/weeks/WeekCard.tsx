@@ -9,12 +9,14 @@ import type { Week } from '../../types/week';
 interface WeekCardProps {
   week: Week;
   onActivate: (week: Week) => void;
+  onCloseWeek?: (week: Week) => void;
   isFeatured?: boolean;
 }
 
 export function WeekCard({
   week,
   onActivate,
+  onCloseWeek,
   isFeatured = false,
 }: WeekCardProps) {
   const isDraft = week.status === 'DRAFT';
@@ -73,10 +75,21 @@ export function WeekCard({
           )}
 
           {isActive && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-              Em Andamento
-            </span>
+            <>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                Em Andamento
+              </span>
+              {onCloseWeek && (
+                <button
+                  type="button"
+                  onClick={() => onCloseWeek(week)}
+                  className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-rose-600 shadow-xs hover:bg-rose-50 transition-colors"
+                >
+                  Encerrar Semana
+                </button>
+              )}
+            </>
           )}
 
           {isClosed && (
