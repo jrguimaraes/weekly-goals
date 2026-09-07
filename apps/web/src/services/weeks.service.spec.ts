@@ -66,4 +66,27 @@ describe('weeksService', () => {
     expect(result).toEqual(mockActivated);
     expect(apiClient.post).toHaveBeenCalledWith('/weeks/w-1/activate');
   });
+
+  it('deve obter o resumo da semana via GET /weeks/:id/summary', async () => {
+    const mockSummary = {
+      week: { id: 'w-1', status: 'ACTIVE' },
+      totalGoals: 4,
+      completedGoals: 2,
+      completionRate: 50,
+      progressRate: 65,
+      metrics: {
+        totalGoals: 4,
+        completedGoals: 2,
+        completionRate: 50,
+        progressRate: 65,
+      },
+      categories: [],
+    };
+    vi.mocked(apiClient.get).mockResolvedValue(mockSummary);
+
+    const result = await weeksService.getSummary('w-1');
+
+    expect(result).toEqual(mockSummary);
+    expect(apiClient.get).toHaveBeenCalledWith('/weeks/w-1/summary');
+  });
 });

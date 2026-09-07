@@ -1,5 +1,5 @@
 import { apiClient } from '../lib/api-client';
-import type { Week, WeekStatus, CreateWeekInput } from '../types/week';
+import type { Week, WeekStatus, CreateWeekInput, WeekSummary } from '../types/week';
 
 export const weeksService = {
   async list(status?: WeekStatus): Promise<Week[]> {
@@ -9,6 +9,10 @@ export const weeksService = {
 
   async getById(id: string): Promise<Week> {
     return apiClient.get<Week>(`/weeks/${id}`);
+  },
+
+  async getSummary(id: string): Promise<WeekSummary> {
+    return apiClient.get<WeekSummary>(`/weeks/${id}/summary`);
   },
 
   async create(data: CreateWeekInput): Promise<Week> {
