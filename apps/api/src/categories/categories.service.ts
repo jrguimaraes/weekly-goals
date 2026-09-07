@@ -1,5 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Category } from '@prisma/client';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Category, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateCategoryDto } from './dto/create-category.dto.js';
 import { ListCategoriesQueryDto } from './dto/list-categories-query.dto.js';
@@ -10,13 +14,35 @@ export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateCategoryDto): Promise<Category> {
-    return this.prisma.category.create({
-      data: {
-        name: data.name.trim(),
-        description: data.description ? data.description.trim() : null,
-        position: data.position ?? 0,
+    const trimmedName = data.name.trim();
+
+    const existing = await this.prisma.category.findFirst({
+      where: {
+        name: { equals: trimmedName, mode: 'insensitive' },
       },
     });
+
+    if (existing) {
+      throw new ConflictException('Já existe uma categoria com este nome.');
+    }
+
+    try {
+      return await this.prisma.category.create({
+        data: {
+          name: trimmedName,
+          description: data.description ? data.description.trim() : null,
+          position: data.position ?? 0,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Já existe uma categoria com este nome.');
+      }
+      throw error;
+    }
   }
 
   async findAll(query?: ListCategoriesQueryDto): Promise<Category[]> {
@@ -52,7 +78,20 @@ export class CategoriesService {
     } = {};
 
     if (data.name !== undefined) {
-      updateData.name = data.name.trim();
+      const trimmedName = data.name.trim();
+
+      const existing = await this.prisma.category.findFirst({
+        where: {
+          name: { equals: trimmedName, mode: 'insensitive' },
+          id: { not: id },
+        },
+      });
+
+      if (existing) {
+        throw new ConflictException('Já existe uma categoria com este nome.');
+      }
+
+      updateData.name = trimmedName;
     }
     if (data.description !== undefined) {
       updateData.description = data.description ? data.description.trim() : null;
@@ -64,10 +103,20 @@ export class CategoriesService {
       updateData.isActive = data.isActive;
     }
 
-    return this.prisma.category.update({
-      where: { id },
-      data: updateData,
-    });
+    try {
+      return await this.prisma.category.update({
+        where: { id },
+        data: updateData,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Já existe uma categoria com este nome.');
+      }
+      throw error;
+    }
   }
 
   async archive(id: string): Promise<Category> {
@@ -79,3 +128,4 @@ export class CategoriesService {
     });
   }
 }
+

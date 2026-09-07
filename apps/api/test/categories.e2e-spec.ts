@@ -105,6 +105,42 @@ describe('Categories (e2e)', () => {
 
       expect(response.body.message).toBeDefined();
     });
+
+    it('deve retornar 409 se tentar criar categoria com nome ja existente', async () => {
+      await request(app.getHttpServer())
+        .post('/api/categories')
+        .send({ name: 'Profissional' })
+        .expect(201);
+
+      const response = await request(app.getHttpServer())
+        .post('/api/categories')
+        .send({ name: 'Profissional' })
+        .expect(409);
+
+      expect(response.body.message).toBe('Já existe uma categoria com este nome.');
+
+      const count = await prisma.category.count({
+        where: { name: 'Profissional' },
+      });
+      expect(count).toBe(1);
+    });
+
+    it('deve retornar 409 se tentar criar categoria com variacao de maiusculas/minusculas ou espacos', async () => {
+      await request(app.getHttpServer())
+        .post('/api/categories')
+        .send({ name: 'Profissional' })
+        .expect(201);
+
+      const response = await request(app.getHttpServer())
+        .post('/api/categories')
+        .send({ name: '  profissional  ' })
+        .expect(409);
+
+      expect(response.body.message).toBe('Já existe uma categoria com este nome.');
+
+      const all = await prisma.category.findMany();
+      expect(all).toHaveLength(1);
+    });
   });
 
   describe('GET /api/categories', () => {
@@ -215,6 +251,52 @@ describe('Categories (e2e)', () => {
         .patch('/api/categories/00000000-0000-0000-0000-000000000000')
         .send({ name: 'Novo Nome' })
         .expect(404);
+    });
+
+    it('deve retornar 409 se tentar atualizar nome para um nome ja utilizado por outra categoria', async () => {
+      await prisma.category.create({
+        data: { name: 'Profissional', position: 1 },
+      });
+      const cat2 = await prisma.category.create({
+        data: { name: 'Saúde', position: 2 },
+      });
+
+      const response = await request(app.getHttpServer())
+        .patch(`/api/categories/${cat2.id}`)
+        .send({ name: 'Profissional' })
+        .expect(409);
+
+      expect(response.body.message).toBe('Já existe uma categoria com este nome.');
+    });
+
+    it('deve retornar 409 se tentar atualizar nome com variacao de maiusculas/minusculas para nome de outra categoria', async () => {
+      await prisma.category.create({
+        data: { name: 'Profissional', position: 1 },
+      });
+      const cat2 = await prisma.category.create({
+        data: { name: 'Saúde', position: 2 },
+      });
+
+      const response = await request(app.getHttpServer())
+        .patch(`/api/categories/${cat2.id}`)
+        .send({ name: '  profissional  ' })
+        .expect(409);
+
+      expect(response.body.message).toBe('Já existe uma categoria com este nome.');
+    });
+
+    it('deve permitir atualizar categoria mantendo o mesmo nome ou alterando apenas outros campos', async () => {
+      const created = await prisma.category.create({
+        data: { name: 'Profissional', description: 'Antiga', position: 1 },
+      });
+
+      const response = await request(app.getHttpServer())
+        .patch(`/api/categories/${created.id}`)
+        .send({ name: 'profissional', description: 'Nova' })
+        .expect(200);
+
+      expect(response.body.name).toBe('profissional');
+      expect(response.body.description).toBe('Nova');
     });
   });
 

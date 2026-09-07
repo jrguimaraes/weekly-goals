@@ -9,7 +9,7 @@ generator client {
 
 model Category {
   id          String   @id @default(uuid())
-  name        String
+  name        String   @unique
   description String?
   position    Int      @default(0)
   isActive    Boolean  @default(true)

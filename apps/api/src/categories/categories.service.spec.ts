@@ -1,5 +1,6 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CategoriesService } from './categories.service.js';
@@ -19,6 +20,7 @@ describe('CategoriesService', () => {
               create: vi.fn(),
               findMany: vi.fn(),
               findUnique: vi.fn(),
+              findFirst: vi.fn(),
               update: vi.fn(),
             },
           },
@@ -45,6 +47,7 @@ describe('CategoriesService', () => {
       updatedAt: new Date(),
     };
 
+    vi.spyOn(prismaService.category, 'findFirst').mockResolvedValue(null);
     vi.spyOn(prismaService.category, 'create').mockResolvedValue(mockCategory);
 
     const result = await service.create({
@@ -53,6 +56,11 @@ describe('CategoriesService', () => {
       position: 1,
     });
 
+    expect(prismaService.category.findFirst).toHaveBeenCalledWith({
+      where: {
+        name: { equals: 'Trabalho', mode: 'insensitive' },
+      },
+    });
     expect(prismaService.category.create).toHaveBeenCalledWith({
       data: {
         name: 'Trabalho',
@@ -61,6 +69,56 @@ describe('CategoriesService', () => {
       },
     });
     expect(result).toEqual(mockCategory);
+  });
+
+  it('deve lancar ConflictException ao tentar criar categoria com nome duplicado', async () => {
+    const existing = {
+      id: 'cat-1',
+      name: 'Trabalho',
+      description: null,
+      position: 0,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.spyOn(prismaService.category, 'findFirst').mockResolvedValue(existing);
+
+    await expect(
+      service.create({ name: 'Trabalho' }),
+    ).rejects.toThrow(new ConflictException('Já existe uma categoria com este nome.'));
+  });
+
+  it('deve lancar ConflictException ao tentar criar categoria com variacao de maiusculas/minusculas', async () => {
+    const existing = {
+      id: 'cat-1',
+      name: 'Trabalho',
+      description: null,
+      position: 0,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.spyOn(prismaService.category, 'findFirst').mockResolvedValue(existing);
+
+    await expect(
+      service.create({ name: 'trabalho' }),
+    ).rejects.toThrow(ConflictException);
+  });
+
+  it('deve lancar ConflictException se prisma retornar erro P2002 no create', async () => {
+    vi.spyOn(prismaService.category, 'findFirst').mockResolvedValue(null);
+    vi.spyOn(prismaService.category, 'create').mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '6.19.3',
+      }),
+    );
+
+    await expect(
+      service.create({ name: 'Saúde' }),
+    ).rejects.toThrow(ConflictException);
   });
 
   it('deve listar categorias com ordenacao deterministica', async () => {
@@ -145,6 +203,7 @@ describe('CategoriesService', () => {
     };
 
     vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(existing);
+    vi.spyOn(prismaService.category, 'findFirst').mockResolvedValue(null);
     vi.spyOn(prismaService.category, 'update').mockResolvedValue(updated);
 
     const result = await service.update('cat-1', {
@@ -152,6 +211,12 @@ describe('CategoriesService', () => {
       position: 2,
     });
 
+    expect(prismaService.category.findFirst).toHaveBeenCalledWith({
+      where: {
+        name: { equals: 'Carreira', mode: 'insensitive' },
+        id: { not: 'cat-1' },
+      },
+    });
     expect(prismaService.category.update).toHaveBeenCalledWith({
       where: { id: 'cat-1' },
       data: {
@@ -160,6 +225,60 @@ describe('CategoriesService', () => {
       },
     });
     expect(result).toEqual(updated);
+  });
+
+  it('deve lancar ConflictException ao tentar atualizar categoria para nome ja em uso por outra', async () => {
+    const existing = {
+      id: 'cat-1',
+      name: 'Trabalho',
+      description: null,
+      position: 0,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const anotherCategory = {
+      id: 'cat-2',
+      name: 'Estudos',
+      description: null,
+      position: 1,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(existing);
+    vi.spyOn(prismaService.category, 'findFirst').mockResolvedValue(anotherCategory);
+
+    await expect(
+      service.update('cat-1', { name: 'Estudos' }),
+    ).rejects.toThrow(new ConflictException('Já existe uma categoria com este nome.'));
+  });
+
+  it('deve lancar ConflictException se prisma retornar erro P2002 no update', async () => {
+    const existing = {
+      id: 'cat-1',
+      name: 'Trabalho',
+      description: null,
+      position: 0,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(existing);
+    vi.spyOn(prismaService.category, 'findFirst').mockResolvedValue(null);
+    vi.spyOn(prismaService.category, 'update').mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '6.19.3',
+      }),
+    );
+
+    await expect(
+      service.update('cat-1', { name: 'Finanças' }),
+    ).rejects.toThrow(ConflictException);
   });
 
   it('deve lancar NotFoundException ao tentar atualizar categoria inexistente', async () => {

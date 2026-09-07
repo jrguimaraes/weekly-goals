@@ -19,7 +19,7 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "pretest:e2e": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/weekly_goals?schema=test\" prisma db push --skip-generate",
+    "pretest:e2e": "DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/weekly_goals?schema=test\" prisma db push --skip-generate --accept-data-loss",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "prisma:generate": "prisma generate"
   },
