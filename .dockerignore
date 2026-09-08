@@ -1,0 +1,41 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+dist
+**/dist
+build
+**/build
+.next
+**/.next
+out
+**/out
+
+# Version control
+.git
+.github
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Testing and coverage
+coverage
+**/coverage
+*.lcov
+
+# TypeScript caches
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Logs
+logs
+**/logs
+*.log
+
+# Documentation and temporary files
+docs/
+AGENTS.md
+Weekly_Goals*.md
