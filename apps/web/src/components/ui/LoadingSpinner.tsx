@@ -20,10 +20,10 @@ export function LoadingSpinner({
   return (
     <div
       role="status"
-      className={`inline-flex items-center justify-center gap-2 text-slate-600 ${className}`}
+      className={`inline-flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 ${className}`}
     >
       <div
-        className={`animate-spin rounded-full border-slate-300 border-t-indigo-600 ${sizeClasses[size]}`}
+        className={`animate-spin rounded-full border-slate-300 border-t-indigo-600 dark:border-slate-700 dark:border-t-indigo-500 ${sizeClasses[size]}`}
       />
       {label && <span className="text-sm font-medium">{label}</span>}
       <span className="sr-only">{label}</span>

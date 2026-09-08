@@ -124,10 +124,10 @@ export default function CategoriesPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
             Categorias de Metas
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Organize áreas de foco (Saúde, Estudos, Carreira, etc.) para vincular suas metas semanais.
           </p>
         </div>
@@ -164,22 +164,22 @@ export default function CategoriesPage() {
           <button
             type="button"
             onClick={() => loadCategories(filter)}
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+            className="text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
           >
             Tentar novamente
           </button>
         </div>
       )}
 
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-        <span className="text-xs font-medium text-slate-500 mr-2">Filtrar:</span>
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 mr-2">Filtrar:</span>
         <button
           type="button"
           onClick={() => handleFilterChange('all')}
           className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
             filter === 'all'
-              ? 'bg-slate-900 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
           }`}
         >
           Todas
@@ -190,7 +190,7 @@ export default function CategoriesPage() {
           className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
             filter === 'active'
               ? 'bg-indigo-600 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
           }`}
         >
           Ativas
@@ -200,8 +200,8 @@ export default function CategoriesPage() {
           onClick={() => handleFilterChange('archived')}
           className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
             filter === 'archived'
-              ? 'bg-slate-700 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              ? 'bg-slate-700 text-white dark:bg-slate-600 dark:text-white'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
           }`}
         >
           Arquivadas

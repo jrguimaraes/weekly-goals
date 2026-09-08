@@ -59,7 +59,7 @@ export default function WeekReportPage() {
     return (
       <div className="flex flex-col items-center justify-center py-28">
         <LoadingSpinner size="lg" />
-        <p className="mt-4 text-sm text-slate-500 font-medium">
+        <p className="mt-4 text-sm text-slate-500 font-medium dark:text-slate-400">
           Carregando relatório consolidado...
         </p>
       </div>
@@ -71,7 +71,7 @@ export default function WeekReportPage() {
       <div className="space-y-6">
         <Link
           href={`/weeks/${weekId}`}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 transition-colors dark:text-slate-400 dark:hover:text-indigo-400"
         >
           ← Voltar para a Semana
         </Link>
@@ -102,7 +102,7 @@ export default function WeekReportPage() {
       <ReportHeader report={report} />
 
       <section className="space-y-3">
-        <h2 className="text-base font-bold text-slate-900 print:text-sm">
+        <h2 className="text-base font-bold text-slate-900 print:text-sm dark:text-slate-100">
           Indicadores Globais de Produtividade
         </h2>
         <ReportSummaryMetrics report={report} />
@@ -113,7 +113,7 @@ export default function WeekReportPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-bold text-slate-900 print:text-sm">
+        <h2 className="text-base font-bold text-slate-900 print:text-sm dark:text-slate-100">
           Detalhamento Individual de Metas
         </h2>
         <ReportGoalsList goals={report.goals} />

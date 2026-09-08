@@ -46,29 +46,29 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs transition-opacity"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs transition-opacity dark:bg-black/70"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
     >
       <div
         ref={modalRef}
-        className={`w-full ${maxWidthClasses[maxWidth]} rounded-xl bg-white p-6 shadow-xl border border-slate-200 transition-all`}
+        className={`w-full ${maxWidthClasses[maxWidth]} rounded-xl bg-white p-6 shadow-xl border border-slate-200 transition-all dark:bg-slate-900 dark:border-slate-800`}
       >
-        <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+        <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h3 id="modal-title" className="text-lg font-semibold text-slate-900 leading-6">
+            <h3 id="modal-title" className="text-lg font-semibold text-slate-900 leading-6 dark:text-slate-100">
               {title}
             </h3>
             {description && (
-              <p className="mt-1 text-xs text-slate-500">{description}</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{description}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Fechar modal"
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
           >
             <svg
               className="h-5 w-5"

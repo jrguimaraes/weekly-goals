@@ -22,12 +22,12 @@ export function ReportGoalsList({ goals }: ReportGoalsListProps) {
     return (
       <div
         key={goal.id}
-        className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs space-y-3"
+        className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs space-y-3 dark:border-slate-800 dark:bg-slate-900"
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             {goal.categoryName && (
-              <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200">
+              <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                 {goal.categoryName}
               </span>
             )}
@@ -36,38 +36,38 @@ export function ReportGoalsList({ goals }: ReportGoalsListProps) {
             <GoalStatusBadge status={goal.status} size="sm" />
           </div>
 
-          <div className="text-xs font-semibold text-slate-700">
+          <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
             {`${percentage}% atingido`}
           </div>
         </div>
 
         <div>
-          <h4 className="text-sm font-bold text-slate-900 leading-snug">{goal.title}</h4>
+          <h4 className="text-sm font-bold text-slate-900 leading-snug dark:text-slate-100">{goal.title}</h4>
           {goal.description && (
-            <p className="mt-1 text-xs text-slate-500 leading-relaxed">{goal.description}</p>
+            <p className="mt-1 text-xs text-slate-500 leading-relaxed dark:text-slate-400">{goal.description}</p>
           )}
         </div>
 
-        <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-600 gap-2">
+        <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-600 gap-2 dark:border-slate-800 dark:text-slate-400">
           <span>
             {goal.type === 'BINARY' ? (
               <>
                 Critério de Sucesso:{' '}
-                <strong className="text-slate-800 font-semibold">
+                <strong className="text-slate-800 font-semibold dark:text-slate-200">
                   {goal.status === 'COMPLETED' ? 'Realizada com Sucesso' : 'Não Realizada'}
                 </strong>
               </>
             ) : (
               <>
                 Resultado Final:{' '}
-                <strong className="text-slate-800 font-semibold">{goal.currentValue}</strong> de{' '}
-                <strong className="text-slate-800 font-semibold">{goal.targetValue}</strong>
+                <strong className="text-slate-800 font-semibold dark:text-slate-200">{goal.currentValue}</strong> de{' '}
+                <strong className="text-slate-800 font-semibold dark:text-slate-200">{goal.targetValue}</strong>
               </>
             )}
           </span>
 
           {goal.completedAt && (
-            <span className="text-slate-400">
+            <span className="text-slate-400 dark:text-slate-500">
               Concluída em {formatDate(goal.completedAt)}
             </span>
           )}
@@ -82,17 +82,17 @@ export function ReportGoalsList({ goals }: ReportGoalsListProps) {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold dark:bg-emerald-950/60 dark:text-emerald-400">
               ✓
             </span>
-            <h3 className="text-sm font-bold text-slate-900">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
               {`Metas Concluídas (${completedGoals.length})`}
             </h3>
           </div>
         </div>
 
         {completedGoals.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-5 text-center text-xs text-slate-500">
+          <div className="rounded-xl border border-slate-200 bg-white p-5 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
             Nenhuma meta foi concluída integralmente neste ciclo.
           </div>
         ) : (
@@ -106,17 +106,17 @@ export function ReportGoalsList({ goals }: ReportGoalsListProps) {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-xs font-bold dark:bg-amber-950/60 dark:text-amber-400">
               !
             </span>
-            <h3 className="text-sm font-bold text-slate-900">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
               {`Metas Incompletas ou Pendentes (${incompleteGoals.length})`}
             </h3>
           </div>
         </div>
 
         {incompleteGoals.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-5 text-center text-xs text-emerald-700 bg-emerald-50/50">
+          <div className="rounded-xl border border-slate-200 bg-white p-5 text-center text-xs text-emerald-700 bg-emerald-50/50 dark:border-emerald-800/60 dark:bg-emerald-950/20 dark:text-emerald-400">
             Excelente! 100% das metas planejadas foram concluídas neste ciclo.
           </div>
         ) : (

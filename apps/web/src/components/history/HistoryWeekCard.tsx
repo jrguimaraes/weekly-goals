@@ -18,21 +18,21 @@ export function HistoryWeekCard({ week }: HistoryWeekCardProps) {
     <div
       className={`rounded-xl border p-5 shadow-xs transition-all ${
         isClosed
-          ? 'border-slate-200 bg-white hover:border-indigo-200 hover:shadow-sm'
+          ? 'border-slate-200 bg-white hover:border-indigo-200 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-800'
           : isActive
-          ? 'border-emerald-300 bg-emerald-50/20 ring-1 ring-emerald-200'
-          : 'border-slate-200 bg-slate-50/40'
+          ? 'border-emerald-300 bg-emerald-50/20 ring-1 ring-emerald-200 dark:border-emerald-700/60 dark:bg-emerald-950/20 dark:ring-emerald-800/40'
+          : 'border-slate-200 bg-slate-50/40 dark:border-slate-800 dark:bg-slate-900/50'
       }`}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-2.5">
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
               {formatDateRange(week.startDate, week.endDate)}
             </h3>
             <WeekStatusBadge status={week.status} size="sm" />
             {isClosed && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 border border-indigo-200">
+              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 border border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-400 dark:border-indigo-800">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
@@ -51,22 +51,22 @@ export function HistoryWeekCard({ week }: HistoryWeekCardProps) {
             )}
           </div>
 
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
             {isClosed ? (
               <p>
                 Ciclo encerrado em{' '}
-                <strong className="text-slate-700 font-semibold">
+                <strong className="text-slate-700 font-semibold dark:text-slate-200">
                   {week.closedAt ? formatDate(week.closedAt) : 'data não informada'}
                 </strong>
                 . Os dados deste ciclo estão consolidados e protegidos contra alterações.
               </p>
             ) : isActive ? (
-              <p className="text-emerald-700 font-medium">
+              <p className="text-emerald-700 font-medium dark:text-emerald-400">
                 Ciclo atualmente em andamento. O relatório analítico definitivo será gerado
                 automaticamente no encerramento da semana.
               </p>
             ) : (
-              <p className="text-slate-500">
+              <p className="text-slate-500 dark:text-slate-400">
                 Ciclo cadastrado em fase de planejamento. O relatório será disponibilizado após
                 ativação e encerramento.
               </p>
@@ -94,7 +94,7 @@ export function HistoryWeekCard({ week }: HistoryWeekCardProps) {
               </Link>
               <Link
                 href={`/weeks/${week.id}`}
-                className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+                className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               >
                 Consultar Metas
               </Link>
@@ -109,7 +109,7 @@ export function HistoryWeekCard({ week }: HistoryWeekCardProps) {
               </Link>
               <Link
                 href={`/weeks/${week.id}`}
-                className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+                className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               >
                 Gerenciar Metas
               </Link>
@@ -117,7 +117,7 @@ export function HistoryWeekCard({ week }: HistoryWeekCardProps) {
           ) : (
             <Link
               href={`/weeks/${week.id}`}
-              className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+              className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             >
               Ver Planejamento
             </Link>

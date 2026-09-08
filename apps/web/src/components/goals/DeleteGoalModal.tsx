@@ -52,28 +52,28 @@ export function DeleteGoalModal({
       <div className="space-y-4">
         {error && <Alert variant="error" message={error} />}
 
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
           Tem certeza de que deseja excluir a meta{' '}
-          <strong className="text-slate-900 font-semibold">{goal.title}</strong>?
+          <strong className="text-slate-900 dark:text-slate-100 font-semibold">{goal.title}</strong>?
         </p>
 
         {goal.category && (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Categoria associada:{' '}
-            <span className="font-medium text-slate-700">{goal.category.name}</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">{goal.category.name}</span>
           </p>
         )}
 
-        <p className="text-xs text-rose-700 bg-rose-50 p-3 rounded-lg border border-rose-200">
+        <p className="text-xs text-rose-700 bg-rose-50 p-3 rounded-lg border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/60 dark:text-rose-300">
           Esta ação é irreversível. O registro da meta será permanentemente removido desta semana.
         </p>
 
-        <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+        <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+            className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
           >
             Cancelar
           </button>

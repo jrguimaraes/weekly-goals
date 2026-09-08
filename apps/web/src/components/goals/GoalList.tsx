@@ -42,7 +42,7 @@ export function GoalList({
   return (
     <div className="space-y-6">
       {/* Barra de Filtros */}
-      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-wrap items-center gap-3">
           <div>
             <label htmlFor="filter-category" className="sr-only">
@@ -52,7 +52,7 @@ export function GoalList({
               id="filter-category"
               value={selectedCategoryId}
               onChange={(e) => onCategoryChange(e.target.value)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             >
               <option value="all">Todas as categorias</option>
               {categories.map((c) => (
@@ -71,7 +71,7 @@ export function GoalList({
               id="filter-status"
               value={selectedStatus}
               onChange={(e) => onStatusChange(e.target.value)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             >
               <option value="all">Todos os status</option>
               <option value="PENDING">Pendentes</option>
@@ -84,22 +84,22 @@ export function GoalList({
             <button
               type="button"
               onClick={handleResetFilters}
-              className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+              className="text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
             >
               Limpar filtros
             </button>
           )}
         </div>
 
-        <div className="text-xs text-slate-500 font-medium">
+        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
           {`${goals.length} ${goals.length === 1 ? 'meta encontrada' : 'metas encontradas'}`}
         </div>
       </div>
 
       {/* Lista de Metas */}
       {goals.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white py-12 px-6 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 mb-3">
+        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white py-12 px-6 text-center dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 mb-3">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -115,10 +115,10 @@ export function GoalList({
               />
             </svg>
           </div>
-          <h3 className="text-base font-semibold text-slate-800">
+          <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">
             {hasActiveFilters ? 'Nenhuma meta encontrada' : 'Nenhuma meta cadastrada'}
           </h3>
-          <p className="mt-1 max-w-sm text-xs text-slate-500">
+          <p className="mt-1 max-w-sm text-xs text-slate-500 dark:text-slate-400">
             {hasActiveFilters
               ? 'Tente ajustar os filtros de categoria ou status para visualizar outras metas.'
               : isWeekClosed

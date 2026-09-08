@@ -17,11 +17,11 @@ export function ReportHeader({ report }: ReportHeaderProps) {
   }
 
   return (
-    <div className="space-y-4 border-b border-slate-200 pb-6 print:border-none print:pb-2">
+    <div className="space-y-4 border-b border-slate-200 pb-6 print:border-none print:pb-2 dark:border-slate-800">
       <div className="flex items-center justify-between print:hidden">
         <Link
           href={`/weeks/${report.week.id}`}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 transition-colors dark:text-slate-400 dark:hover:text-indigo-400"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -41,11 +41,11 @@ export function ReportHeader({ report }: ReportHeaderProps) {
         <button
           type="button"
           onClick={handlePrint}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-3.5 w-3.5 text-slate-500"
+            className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -62,24 +62,24 @@ export function ReportHeader({ report }: ReportHeaderProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700 border border-slate-200">
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
               Relatório Consolidado
             </span>
-            <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
+            <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800">
               Snapshot Imutável
             </span>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-400 dark:text-slate-500">
               {`v${report.version}`}
             </span>
           </div>
 
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
             {formatDateRange(report.week.startDate, report.week.endDate)}
           </h1>
 
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Ciclo encerrado e consolidado em{' '}
-            <strong className="text-slate-700 font-semibold">
+            <strong className="text-slate-700 font-semibold dark:text-slate-200">
               {formatDate(report.generatedAt)}
             </strong>
             . Os dados foram preservados deterministicamente.

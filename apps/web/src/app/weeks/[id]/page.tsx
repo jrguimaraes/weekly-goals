@@ -216,7 +216,7 @@ export default function WeekGoalsPage() {
       <div className="flex items-center justify-between">
         <Link
           href="/weeks"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -238,10 +238,10 @@ export default function WeekGoalsPage() {
       {/* Cabeçalho */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
             {formatDateRange(week.startDate, week.endDate)}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Gerencie as metas associadas a este ciclo semanal.
           </p>
         </div>
@@ -252,7 +252,7 @@ export default function WeekGoalsPage() {
               <button
                 type="button"
                 onClick={() => setIsCloseModalOpen(true)}
-                className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white px-3.5 py-2 text-xs font-semibold text-rose-600 shadow-xs hover:bg-rose-50 transition-colors"
+                className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white px-3.5 py-2 text-xs font-semibold text-rose-600 shadow-xs hover:bg-rose-50 dark:border-rose-900/60 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/40 transition-colors"
               >
                 Encerrar Semana
               </button>
@@ -282,10 +282,10 @@ export default function WeekGoalsPage() {
 
       {/* Alertas contextuais de status */}
       {isClosed && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 dark:border-indigo-900/60 dark:bg-indigo-950/40">
           <div className="space-y-0.5">
-            <span className="text-xs font-bold text-indigo-900">Relatório Consolidado Disponível</span>
-            <p className="text-xs text-indigo-700">
+            <span className="text-xs font-bold text-indigo-900 dark:text-indigo-200">Relatório Consolidado Disponível</span>
+            <p className="text-xs text-indigo-700 dark:text-indigo-300">
               Esta semana está encerrada e seu snapshot consolidado de produtividade está disponível para consulta e impressão.
             </p>
           </div>
@@ -322,21 +322,21 @@ export default function WeekGoalsPage() {
 
       {/* Cards de Métricas da Semana */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-          <p className="text-xs font-medium text-slate-500">Total de Metas</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{totalGoals}</p>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Total de Metas</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">{totalGoals}</p>
         </div>
-        <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 shadow-xs">
-          <p className="text-xs font-medium text-emerald-700">Concluídas</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-800">{completedGoals}</p>
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 shadow-xs dark:border-emerald-900/50 dark:bg-emerald-950/30">
+          <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Concluídas</p>
+          <p className="mt-1 text-2xl font-bold text-emerald-800 dark:text-emerald-200">{completedGoals}</p>
         </div>
-        <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 shadow-xs">
-          <p className="text-xs font-medium text-indigo-700">Em Progresso</p>
-          <p className="mt-1 text-2xl font-bold text-indigo-800">{inProgressGoals}</p>
+        <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 shadow-xs dark:border-indigo-900/50 dark:bg-indigo-950/30">
+          <p className="text-xs font-medium text-indigo-700 dark:text-indigo-300">Em Progresso</p>
+          <p className="mt-1 text-2xl font-bold text-indigo-800 dark:text-indigo-200">{inProgressGoals}</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-          <p className="text-xs font-medium text-slate-500">Pendentes</p>
-          <p className="mt-1 text-2xl font-bold text-slate-700">{pendingGoals}</p>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Pendentes</p>
+          <p className="mt-1 text-2xl font-bold text-slate-700 dark:text-slate-300">{pendingGoals}</p>
         </div>
       </div>
 

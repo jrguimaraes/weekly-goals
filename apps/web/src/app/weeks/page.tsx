@@ -119,10 +119,10 @@ export default function WeeksPage() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
             Planejamento Semanal
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Ciclos estritos de 7 dias. Cadastre semanas em planejamento e ative a semana atual para execução.
           </p>
         </div>
@@ -159,7 +159,7 @@ export default function WeeksPage() {
           <button
             type="button"
             onClick={() => loadWeeks(filter)}
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+            className="text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
           >
             Tentar novamente
           </button>
@@ -167,55 +167,55 @@ export default function WeeksPage() {
       )}
 
       {/* Destaque do Ciclo Ativo */}
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
               Ciclo Semanal em Execução
             </h2>
-            <span className="text-xs text-slate-400 font-normal">
+            <span className="text-xs text-slate-400 dark:text-slate-500 font-normal">
               (Máximo de 1 semana ativa por vez)
             </span>
           </div>
           {activeWeek && <WeekStatusBadge status="ACTIVE" size="sm" />}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-slate-100">
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
           {activeWeek ? (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-lg bg-emerald-50/60 p-4 border border-emerald-100">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-lg bg-emerald-50/60 p-4 border border-emerald-100 dark:bg-emerald-950/30 dark:border-emerald-800/60">
               <div>
-                <div className="text-base font-bold text-emerald-950">
+                <div className="text-base font-bold text-emerald-950 dark:text-emerald-200">
                   {formatDateRange(activeWeek.startDate, activeWeek.endDate)}
                 </div>
-                <div className="text-xs text-emerald-700 mt-0.5">
+                <div className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
                   Semana em andamento. O progresso das metas vinculadas a este ciclo está ativo.
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-white px-3 py-1.5 rounded-lg border border-emerald-200 shadow-2xs">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-white px-3 py-1.5 rounded-lg border border-emerald-200 shadow-2xs dark:bg-slate-800 dark:border-emerald-700/60 dark:text-emerald-300">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                   Ativa
                 </span>
                 <Link
                   href={`/weeks/${activeWeek.id}`}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
                 >
                   Ver Metas
                 </Link>
                 <button
                   type="button"
                   onClick={() => handleOpenClose(activeWeek)}
-                  className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 shadow-xs hover:bg-rose-50 transition-colors"
+                  className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 shadow-xs hover:bg-rose-50 dark:border-rose-900/60 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/40 transition-colors"
                 >
                   Encerrar Semana
                 </button>
               </div>
             </div>
           ) : (
-            <div className="rounded-lg bg-slate-50 p-4 border border-slate-200 text-xs text-slate-600 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="rounded-lg bg-slate-50 p-4 border border-slate-200 text-xs text-slate-600 dark:bg-slate-800/60 dark:border-slate-700 dark:text-slate-400 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <span className="font-semibold text-slate-800">Nenhum ciclo semanal ativo no momento.</span>
-                <p className="text-slate-500 mt-0.5">
+                <span className="font-semibold text-slate-800 dark:text-slate-200">Nenhum ciclo semanal ativo no momento.</span>
+                <p className="text-slate-500 dark:text-slate-400 mt-0.5">
                   Selecione uma semana em planejamento (DRAFT) abaixo e clique em &quot;Ativar Semana&quot; para iniciar.
                 </p>
               </div>
@@ -226,15 +226,15 @@ export default function WeeksPage() {
 
       {/* Listagem geral de ciclos */}
       <section className="space-y-4">
-        <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-          <span className="text-xs font-medium text-slate-500 mr-2">Filtrar por Status:</span>
+        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 mr-2">Filtrar por Status:</span>
           <button
             type="button"
             onClick={() => handleFilterChange('all')}
             className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
               filter === 'all'
-                ? 'bg-slate-900 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
             }`}
           >
             Todas
@@ -245,7 +245,7 @@ export default function WeeksPage() {
             className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
               filter === 'ACTIVE'
                 ? 'bg-emerald-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
             }`}
           >
             Ativas (ACTIVE)
@@ -256,7 +256,7 @@ export default function WeeksPage() {
             className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
               filter === 'DRAFT'
                 ? 'bg-amber-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
             }`}
           >
             Em Planejamento (DRAFT)
@@ -266,8 +266,8 @@ export default function WeeksPage() {
             onClick={() => handleFilterChange('CLOSED')}
             className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
               filter === 'CLOSED'
-                ? 'bg-slate-700 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'bg-slate-700 text-white dark:bg-slate-600 dark:text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
             }`}
           >
             Fechadas (CLOSED)

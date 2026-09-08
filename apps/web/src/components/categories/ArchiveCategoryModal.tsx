@@ -52,20 +52,20 @@ export function ArchiveCategoryModal({
       <div className="space-y-4">
         {error && <Alert variant="error" message={error} />}
 
-        <p className="text-sm text-slate-600">
-          Deseja arquivar a categoria <strong className="text-slate-900 font-semibold">{category.name}</strong>?
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          Deseja arquivar a categoria <strong className="text-slate-900 dark:text-slate-100 font-semibold">{category.name}</strong>?
         </p>
 
-        <p className="text-xs text-slate-500 bg-amber-50 p-3 rounded-lg border border-amber-200">
+        <p className="text-xs text-slate-500 bg-amber-50 p-3 rounded-lg border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/60 dark:text-amber-200">
           Ao arquivar, a categoria não estará disponível para inclusão de novas metas, mas todos os ciclos e relatórios passados permanecerão preservados integralmente. Você poderá reativá-la posteriormente.
         </p>
 
-        <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+        <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+            className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
           >
             Cancelar
           </button>

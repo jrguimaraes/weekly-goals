@@ -82,7 +82,7 @@ export function GoalProgressControl({
           className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-xs transition-colors ${
             isCompleted
               ? 'bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60'
-              : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-60'
+              : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
           }`}
         >
           {isUpdating ? (
@@ -101,7 +101,7 @@ export function GoalProgressControl({
               />
             </svg>
           ) : (
-            <div className="h-4 w-4 rounded border border-slate-400 bg-white" />
+            <div className="h-4 w-4 rounded border border-slate-400 bg-white dark:border-slate-600 dark:bg-slate-700" />
           )}
           <span>{isCompleted ? 'Concluída' : 'Concluir'}</span>
         </button>
@@ -115,13 +115,13 @@ export function GoalProgressControl({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="inline-flex items-center rounded-lg border border-slate-300 bg-white shadow-xs">
+      <div className="inline-flex items-center rounded-lg border border-slate-300 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800">
         <button
           type="button"
           onClick={() => handleQuantityStep(-1)}
           disabled={isWeekClosed || isUpdating || isZero}
           aria-label="Diminuir progresso"
-          className="px-2.5 py-1 text-slate-600 hover:bg-slate-100 disabled:opacity-40 transition-colors rounded-l-lg text-sm font-bold"
+          className="px-2.5 py-1 text-slate-600 hover:bg-slate-100 disabled:opacity-40 transition-colors rounded-l-lg text-sm font-bold dark:text-slate-300 dark:hover:bg-slate-700"
         >
           −
         </button>
@@ -136,7 +136,7 @@ export function GoalProgressControl({
             onBlur={() => handleQuantityDirectSubmit()}
             disabled={isWeekClosed || isUpdating}
             aria-label="Progresso atual"
-            className="w-14 text-center text-xs font-bold text-slate-800 focus:outline-none focus:bg-indigo-50/50 py-1"
+            className="w-14 text-center text-xs font-bold text-slate-800 focus:outline-none focus:bg-indigo-50/50 dark:focus:bg-indigo-950/40 py-1 dark:text-slate-100"
           />
         </form>
 
@@ -145,13 +145,13 @@ export function GoalProgressControl({
           onClick={() => handleQuantityStep(1)}
           disabled={isWeekClosed || isUpdating}
           aria-label="Aumentar progresso"
-          className="px-2.5 py-1 text-slate-600 hover:bg-slate-100 disabled:opacity-40 transition-colors rounded-r-lg text-sm font-bold"
+          className="px-2.5 py-1 text-slate-600 hover:bg-slate-100 disabled:opacity-40 transition-colors rounded-r-lg text-sm font-bold dark:text-slate-300 dark:hover:bg-slate-700"
         >
           +
         </button>
       </div>
 
-      <span className="text-xs text-slate-400">{`/ ${goal.targetValue}`}</span>
+      <span className="text-xs text-slate-400 dark:text-slate-500">{`/ ${goal.targetValue}`}</span>
 
       {isUpdating && <LoadingSpinner size="sm" />}
 
@@ -161,7 +161,7 @@ export function GoalProgressControl({
           onClick={() => onProgressChange(goal.id, goal.targetValue)}
           disabled={isUpdating}
           aria-label="Atingir meta imediatamente"
-          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline-offset-2 hover:underline transition-colors"
+          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline-offset-2 hover:underline transition-colors dark:text-indigo-400 dark:hover:text-indigo-300"
         >
           Atingir meta
         </button>

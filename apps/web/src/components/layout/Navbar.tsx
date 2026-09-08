@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { apiClient } from '../../lib/api-client';
+import { ThemeToggle } from './ThemeToggle';
 import type { HealthCheckResponse } from '../../types/api';
 
 const navItems = [
@@ -40,7 +41,7 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
@@ -63,10 +64,10 @@ export function Navbar() {
               </svg>
             </div>
             <div className="flex flex-col">
-              <span className="text-base font-bold text-slate-900 leading-tight">
+              <span className="text-base font-bold text-slate-900 leading-tight dark:text-slate-100">
                 Weekly Goals
               </span>
-              <span className="text-xs text-slate-500 font-medium">
+              <span className="text-xs text-slate-500 font-medium dark:text-slate-400">
                 Planejamento Semanal
               </span>
             </div>
@@ -81,8 +82,8 @@ export function Navbar() {
                   href={item.href}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-indigo-50 text-indigo-700'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
                   }`}
                 >
                   {item.label}
@@ -92,9 +93,9 @@ export function Navbar() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div
-            className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs"
+            className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs dark:border-slate-700 dark:bg-slate-800"
             title={
               apiStatus === 'online'
                 ? 'Backend conectado e operacional'
@@ -112,14 +113,16 @@ export function Navbar() {
                   : 'bg-amber-400'
               }`}
             />
-            <span className="font-medium text-slate-600">
+            <span className="font-medium text-slate-600 dark:text-slate-300">
               API {apiStatus === 'online' ? 'Online' : apiStatus === 'offline' ? 'Offline' : '...'}
             </span>
           </div>
+
+          <ThemeToggle />
         </div>
       </div>
 
-      <div className="flex md:hidden overflow-x-auto border-t border-slate-100 px-4 py-2 gap-1">
+      <div className="flex md:hidden overflow-x-auto border-t border-slate-100 px-4 py-2 gap-1 dark:border-slate-800">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -128,8 +131,8 @@ export function Navbar() {
               href={item.href}
               className={`whitespace-nowrap px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 isActive
-                  ? 'bg-indigo-50 text-indigo-700 font-semibold'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950/70 dark:text-indigo-300'
+                  : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
               }`}
             >
               {item.label}

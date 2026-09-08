@@ -133,18 +133,18 @@ export default function HomePage() {
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
             Painel Semanal
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Acompanhe a execução, taxas de progresso e metas do ciclo em andamento.
           </p>
         </div>
 
         {error && <Alert variant="error" message={error} />}
 
-        <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-8 sm:p-12 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 mb-4">
+        <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-8 sm:p-12 text-center dark:border-slate-800 dark:bg-slate-900">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 mb-4">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-7 w-7"
@@ -161,15 +161,15 @@ export default function HomePage() {
             </svg>
           </div>
 
-          <h3 className="text-lg font-bold text-slate-900">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
             Nenhuma semana ativa no momento
           </h3>
 
           {draftWeek ? (
             <div className="mt-2 space-y-4">
-              <p className="max-w-md mx-auto text-xs text-slate-500 leading-relaxed">
+              <p className="max-w-md mx-auto text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 Você possui a semana{' '}
-                <strong className="text-slate-800 font-semibold">
+                <strong className="text-slate-800 dark:text-slate-200 font-semibold">
                   {formatDateRange(draftWeek.startDate, draftWeek.endDate)}
                 </strong>{' '}
                 em fase de planejamento. Ative-a para acompanhar o progresso das suas metas no
@@ -178,7 +178,7 @@ export default function HomePage() {
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 <Link
                   href={`/weeks/${draftWeek.id}`}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
                 >
                   Ver Metas Planejadas
                 </Link>
@@ -192,14 +192,14 @@ export default function HomePage() {
             </div>
           ) : closedWeeks.length > 0 ? (
             <div className="mt-2 space-y-4">
-              <p className="max-w-md mx-auto text-xs text-slate-500 leading-relaxed">
+              <p className="max-w-md mx-auto text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 O último ciclo semanal foi encerrado. Crie uma nova semana em planejamento para
                 organizar suas próximas metas.
               </p>
               <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
                 <Link
                   href="/history"
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
                 >
                   Consultar Histórico de Ciclos
                 </Link>
@@ -213,14 +213,14 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="mt-2 space-y-4">
-              <p className="max-w-md mx-auto text-xs text-slate-500 leading-relaxed">
+              <p className="max-w-md mx-auto text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 Cadastre suas primeiras categorias e planeje uma nova semana de metas para
                 começar a acompanhar sua produtividade.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 <Link
                   href="/categories"
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
                 >
                   Cadastrar Categorias
                 </Link>
@@ -244,19 +244,19 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       {/* Cabeçalho da Semana Ativa */}
-      <div className="rounded-2xl border border-emerald-200 bg-linear-to-r from-emerald-50/70 via-white to-indigo-50/40 p-6 shadow-xs">
+      <div className="rounded-2xl border border-emerald-200 bg-linear-to-r from-emerald-50/70 via-white to-indigo-50/40 p-6 shadow-xs dark:border-emerald-800/60 dark:from-emerald-950/30 dark:via-slate-900 dark:to-indigo-950/20">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-2.5 py-0.5 rounded-full border border-emerald-300/60">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-2.5 py-0.5 rounded-full border border-emerald-300/60 dark:text-emerald-300 dark:bg-emerald-950/80 dark:border-emerald-800/80">
                 Ciclo Atual
               </span>
               <WeekStatusBadge status={currentWeek.status} size="sm" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
               {formatDateRange(currentWeek.startDate, currentWeek.endDate)}
             </h1>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Métricas e acompanhamento ágil de metas da semana em andamento.
             </p>
           </div>
@@ -265,11 +265,11 @@ export default function HomePage() {
             <button
               type="button"
               onClick={loadDashboard}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-3.5 w-3.5 text-slate-500"
+                className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -283,14 +283,14 @@ export default function HomePage() {
             </button>
             <Link
               href={`/weeks/${currentWeek.id}`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
             >
               Gerenciar Metas
             </Link>
             <button
               type="button"
               onClick={() => setIsCloseModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-rose-600 shadow-xs hover:bg-rose-50 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-rose-600 shadow-xs hover:bg-rose-50 dark:border-rose-900/60 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/40 transition-colors"
             >
               Encerrar Semana
             </button>
@@ -306,8 +306,8 @@ export default function HomePage() {
       {/* Grid de Métricas Principais (Summary) */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-900">Indicadores da Semana</h2>
-          <span className="text-xs text-slate-500">Calculado pelo backend</span>
+          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Indicadores da Semana</h2>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Calculado pelo backend</span>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -356,8 +356,8 @@ export default function HomePage() {
       {/* Métricas por Categoria */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-900">Progresso por Categoria</h2>
-          <span className="text-xs text-slate-500 font-medium">
+          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Progresso por Categoria</h2>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
             {summary.categories.length}{' '}
             {summary.categories.length === 1 ? 'categoria ativa' : 'categorias ativas'}
           </span>
@@ -370,25 +370,25 @@ export default function HomePage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Metas em Acompanhamento</h2>
-            <p className="text-xs text-slate-500">
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Metas em Acompanhamento</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Atualize o progresso diretamente no painel para recalcular os indicadores.
             </p>
           </div>
           <Link
             href={`/weeks/${currentWeek.id}`}
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
           >
             + Adicionar / Editar Metas
           </Link>
         </div>
 
         {goals.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
-            <p className="text-sm font-semibold text-slate-800">
+          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
               Nenhuma meta cadastrada para esta semana ativa.
             </p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Adicione metas para começar a pontuar suas taxas de conclusão e progresso.
             </p>
             <Link

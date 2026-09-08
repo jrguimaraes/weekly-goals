@@ -15,28 +15,28 @@ const variantStyles: Record<
   { container: string; icon: string; title: string; text: string }
 > = {
   error: {
-    container: 'bg-red-50 border-red-200 text-red-800',
-    icon: 'text-red-500',
-    title: 'text-red-900',
-    text: 'text-red-700',
+    container: 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/40 dark:border-red-900/60 dark:text-red-300',
+    icon: 'text-red-500 dark:text-red-400',
+    title: 'text-red-900 dark:text-red-200',
+    text: 'text-red-700 dark:text-red-300',
   },
   warning: {
-    container: 'bg-amber-50 border-amber-200 text-amber-800',
-    icon: 'text-amber-500',
-    title: 'text-amber-900',
-    text: 'text-amber-700',
+    container: 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/40 dark:border-amber-900/60 dark:text-amber-300',
+    icon: 'text-amber-500 dark:text-amber-400',
+    title: 'text-amber-900 dark:text-amber-200',
+    text: 'text-amber-700 dark:text-amber-300',
   },
   success: {
-    container: 'bg-emerald-50 border-emerald-200 text-emerald-800',
-    icon: 'text-emerald-500',
-    title: 'text-emerald-900',
-    text: 'text-emerald-700',
+    container: 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-300',
+    icon: 'text-emerald-500 dark:text-emerald-400',
+    title: 'text-emerald-900 dark:text-emerald-200',
+    text: 'text-emerald-700 dark:text-emerald-300',
   },
   info: {
-    container: 'bg-blue-50 border-blue-200 text-blue-800',
-    icon: 'text-blue-500',
-    title: 'text-blue-900',
-    text: 'text-blue-700',
+    container: 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/40 dark:border-blue-900/60 dark:text-blue-300',
+    icon: 'text-blue-500 dark:text-blue-400',
+    title: 'text-blue-900 dark:text-blue-200',
+    text: 'text-blue-700 dark:text-blue-300',
   },
 };
 
@@ -77,7 +77,7 @@ export function Alert({
             type="button"
             onClick={onDismiss}
             aria-label="Fechar alerta"
-            className="text-slate-400 hover:text-slate-600 focus:outline-none"
+            className="text-slate-400 hover:text-slate-600 focus:outline-none dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
           >
             <span aria-hidden="true" className="text-base font-bold">&times;</span>
           </button>

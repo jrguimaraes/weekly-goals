@@ -59,18 +59,18 @@ export function CloseWeekModal({
       <div className="space-y-4">
         {error && <Alert variant="error" message={error} />}
 
-        <div className="rounded-lg bg-amber-50 p-4 border border-amber-200 text-xs text-amber-950 space-y-1">
-          <div className="font-semibold text-amber-900">Período a ser encerrado:</div>
-          <div className="text-sm font-bold text-amber-900">
+        <div className="rounded-lg bg-amber-50 p-4 border border-amber-200 text-xs text-amber-950 dark:bg-amber-950/40 dark:border-amber-900/60 dark:text-amber-200 space-y-1">
+          <div className="font-semibold text-amber-900 dark:text-amber-100">Período a ser encerrado:</div>
+          <div className="text-sm font-bold text-amber-900 dark:text-amber-200">
             {formatDateRange(week.startDate, week.endDate)}
           </div>
         </div>
 
-        <div className="rounded-lg bg-rose-50 p-4 border border-rose-200 space-y-2 text-xs text-rose-800">
-          <div className="font-bold text-rose-900 flex items-center gap-1.5">
+        <div className="rounded-lg bg-rose-50 p-4 border border-rose-200 space-y-2 text-xs text-rose-800 dark:bg-rose-950/40 dark:border-rose-900/60 dark:text-rose-300">
+          <div className="font-bold text-rose-900 dark:text-rose-200 flex items-center gap-1.5">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 shrink-0 text-rose-600"
+              className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
@@ -95,16 +95,16 @@ export function CloseWeekModal({
           </ul>
         </div>
 
-        <p className="text-xs text-slate-500 leading-relaxed">
+        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
           Tem certeza de que revisou todos os seus avanços e deseja concluir este ciclo agora?
         </p>
 
-        <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+        <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
           >
             Cancelar
           </button>
