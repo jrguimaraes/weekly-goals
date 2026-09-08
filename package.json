@@ -16,9 +16,15 @@
     "test:api": "pnpm --filter api test",
     "test:web": "pnpm --filter web test",
     "test:e2e": "pnpm --filter api test:e2e",
-    "db:up": "docker compose up -d",
-    "db:down": "docker compose down",
-    "db:logs": "docker compose logs -f"
+    "app:up": "docker compose up -d --build",
+    "app:down": "docker compose down",
+    "app:stop": "docker compose stop",
+    "app:restart": "docker compose restart",
+    "app:status": "docker compose ps -a",
+    "app:logs": "docker compose logs -f",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose stop postgres",
+    "db:logs": "docker compose logs -f postgres"
   },
   "packageManager": "pnpm@12.3.4"
 }
