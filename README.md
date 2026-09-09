@@ -20,7 +20,7 @@ A ideia surgiu a partir de uma rotina pessoal de planejamento e acompanhamento s
 | **Estilização** | [Tailwind CSS v4](https://tailwindcss.com/) | Design responsivo, paleta refinada e suporte nativo a impressão (`@media print`) |
 | **Testes** | [Vitest](https://vitest.dev/) • Supertest | Execução ultra-rápida de testes unitários, integração e ponta a ponta |
 | **Linters & Qualidade**| [Oxlint](https://oxc.rs/) • ESLint | Validação estática de código no backend e frontend |
-| **Infraestrutura Local**| [Docker Compose](https://www.docker.com/) | Container PostgreSQL 16 Alpine com healthcheck e volume persistente |
+| **Infraestrutura** | [Docker Compose](https://www.docker.com/) | Orquestração completa de contêineres: PostgreSQL 16 Alpine, API NestJS e Web Next.js com builds multi-stage |
 
 ---
 
@@ -31,7 +31,7 @@ O projeto adota uma **arquitetura monolítica modular**, dividida em workspaces 
 ```text
 weekly-goals/
 ├── apps/
-│   ├── api/                   # Backend NestJS
+│   ├── api/                   # Backend NestJS (Dockerfile multi-stage)
 │   │   ├── prisma/            # Schema do Prisma e migrations SQL
 │   │   └── src/
 │   │       ├── categories/    # Módulo de gestão de categorias
@@ -41,14 +41,14 @@ weekly-goals/
 │   │       ├── reports/       # Consulta e persistência de snapshots
 │   │       ├── health/        # Healthcheck e liveness da aplicação
 │   │       └── prisma/        # PrismaService com shutdown hooks
-│   └── web/                   # Frontend Next.js
+│   └── web/                   # Frontend Next.js (Dockerfile multi-stage)
 │       └── src/
 │           ├── app/           # App Router (/, /categories, /weeks, /weeks/[id], /history)
 │           ├── components/    # Componentes modulares (dashboard, goals, weeks, reports)
 │           ├── services/      # Camada de comunicação com a API REST
 │           ├── types/         # Definições de tipagem TypeScript compartilhadas
-│           └── lib/           # Utilitários (api-client, date-utils)
-└── docker-compose.yml         # Instância local do PostgreSQL
+│           └── lib/           # Utilitários (api-client, date-utils, goal-utils)
+└── docker-compose.yml         # Orquestração completa: PostgreSQL + API + Web
 ```
 
 ### Regras de Negócio e Princípios Centrais
@@ -59,7 +59,7 @@ weekly-goals/
   - `ACTIVE → CLOSED`: Executado em transação única (`prisma.$transaction`), congelando o ciclo e gravando o `WeekReport`.
 - **Tipos de Metas**:
   - `BINARY`: Meta binária (0 ou 1). Conclusão automática ao atingir 1.
-  - `QUANTITY`: Meta numérica com `targetValue > 0`. Atualizações de progresso refletem em status automático (`PENDING` se 0, `IN_PROGRESS` se parcial, `COMPLETED` se atingir a meta).
+  - `QUANTITY`: Meta numérica com `targetValue > 0`. Atualizações de progresso refletem em status automático (`PENDING` se 0, `IN_PROGRESS` se parcial, `COMPLETED` se atingir a meta, permitindo superação).
 - **Snapshot Imutável**: O endpoint `GET /weeks/:id/report` retorna estritamente a versão congelada do relatório consolidado para ciclos fechados.
 
 ---
@@ -86,22 +86,46 @@ pnpm install
 
 ---
 
-### 3. Iniciar o Banco de Dados PostgreSQL
+### 3. Execução via Docker Compose (Recomendado)
 
-Suba o container do PostgreSQL em segundo plano:
+O projeto possui orquestração completa com Docker Compose para subir toda a aplicação (PostgreSQL + NestJS API + Next.js Web) com um único comando na raiz:
 
 ```bash
-pnpm db:up
+# Sobe a aplicação completa em segundo plano com build e migrations automáticas
+pnpm app:up
 ```
 
-*Para verificar os logs do banco:* `pnpm db:logs`  
-*Para encerrar o banco:* `pnpm db:down`
+#### Comandos de Ciclo de Vida da Aplicação:
+| Comando | Descrição |
+|---|---|
+| `pnpm app:up` | Compila e sobe PostgreSQL, API e Web com healthchecks automáticos |
+| `pnpm app:status` | Exibe o status de todos os contêineres (`docker compose ps -a`) |
+| `pnpm app:logs` | Acompanha os logs unificados de todos os serviços em tempo real |
+| `pnpm app:restart` | Reinicia todos os serviços da aplicação |
+| `pnpm app:stop` | Pausa a execução dos contêineres sem removê-los |
+| `pnpm app:down` | Encerra e remove contêineres e redes (mantendo dados do banco preservados) |
+
+#### Endereços de Acesso:
+- **Frontend Web:** `http://localhost:3001`
+- **Backend API:** `http://localhost:3000/api`
+- **Documentação Swagger:** `http://localhost:3000/api/docs`
+- **Healthcheck:** `http://localhost:3000/api/health`
 
 ---
 
-### 4. Configurar Variáveis de Ambiente
+### 4. Execução Manual para Desenvolvimento Local (Alternativa)
 
-Crie os arquivos `.env` na API e no Web a partir dos modelos `.env.example`:
+Caso deseje executar os serviços diretamente no ambiente do host com hot-reload ativo:
+
+#### A. Iniciar o Banco de Dados PostgreSQL
+```bash
+pnpm db:up
+```
+*Para acompanhar logs do banco:* `pnpm db:logs`  
+*Para pausar o banco:* `pnpm db:down`
+
+#### B. Configurar Variáveis de Ambiente
+Crie os arquivos `.env` a partir dos modelos `.env.example`:
 
 **API (`apps/api/.env`):**
 ```env
@@ -115,40 +139,22 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/weekly_goals?schema=p
 NEXT_PUBLIC_API_URL=http://localhost:3000/api
 ```
 
----
-
-### 5. Executar as Migrations do Banco
-
-Execute as migrations do Prisma para estruturar as tabelas e índices no PostgreSQL:
-
+#### C. Executar Migrations do Banco
 ```bash
 pnpm --filter api exec prisma migrate deploy
 ```
+*(Opcional) Visualizar banco no Prisma Studio:* `pnpm --filter api exec prisma studio`
 
-*(Opcional) Para visualizar o banco no Prisma Studio:*
+#### D. Iniciar os Serviços
+Em terminais separados:
+
 ```bash
-pnpm --filter api exec prisma studio
-```
-
----
-
-### 6. Iniciar a Aplicação
-
-Em terminais separados (ou utilizando scripts do monorepo):
-
-**Iniciar API (Backend):**
-```bash
+# Terminal 1 — Inicia API NestJS em modo de desenvolvimento
 pnpm start:api
-```
-> A API estará disponível em: `http://localhost:3000/api`  
-> Documentação OpenAPI / Swagger: `http://localhost:3000/api/docs`  
-> Healthcheck: `http://localhost:3000/api/health`
 
-**Iniciar Web (Frontend):**
-```bash
+# Terminal 2 — Inicia Frontend Next.js em modo de desenvolvimento
 pnpm start:web
 ```
-> A interface web estará disponível em: `http://localhost:3001`
 
 ---
 
