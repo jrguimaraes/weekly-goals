@@ -68,9 +68,8 @@ describe('GoalCard', () => {
     expect(html).toContain('Leitura de artigo técnico');
     expect(html).toContain('Mínimo de 30 minutos');
     expect(html).toContain('Estudos');
-    expect(html).toContain('Binária');
+    expect(html).toContain('bg-indigo-50');
     expect(html).toContain('Alta');
-    expect(html).toContain('Concluída');
     expect(html).toContain('Realizada');
     expect(html).toContain('Editar');
     expect(html).toContain('Excluir');
@@ -88,9 +87,8 @@ describe('GoalCard', () => {
 
     expect(html).toContain('Treinos de corrida');
     expect(html).toContain('Saúde');
-    expect(html).toContain('Quantitativa');
+    expect(html).toContain('bg-indigo-50');
     expect(html).toContain('Média');
-    expect(html).toContain('Em Progresso');
     expect(html).toContain('Progresso:');
     expect(html).toContain('2');
     expect(html).toContain('4');
@@ -127,5 +125,28 @@ describe('GoalCard', () => {
 
     expect(html).toContain('Acompanhamento:');
     expect(html).toContain('Concluída');
+  });
+
+  it('deve dar destaque visual e exibir badge de superada para metas que ultrapassaram o esperado', () => {
+    const exceededGoal: Goal = {
+      ...quantityGoal,
+      currentValue: 6,
+      targetValue: 4,
+      status: 'COMPLETED',
+    };
+
+    const html = renderToString(
+      <GoalCard
+        goal={exceededGoal}
+        isWeekClosed={false}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('Superada');
+    expect(html).toContain('+2');
+    expect(html).toContain('150%');
+    expect(html).toContain('border-emerald-300');
   });
 });

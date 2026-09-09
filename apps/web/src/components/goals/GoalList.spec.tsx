@@ -81,6 +81,7 @@ describe('GoalList', () => {
     expect(html).toContain('2 metas encontradas');
     expect(html).toContain('Meta de Estudo');
     expect(html).toContain('Meta de Saúde');
+    expect(html.indexOf('Meta de Saúde')).toBeLessThan(html.indexOf('Meta de Estudo'));
     expect(html).toContain('Todas as categorias');
     expect(html).toContain('Todos os status');
   });

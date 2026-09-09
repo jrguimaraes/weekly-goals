@@ -13,6 +13,7 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Alert } from '../components/ui/Alert';
 import { getApiErrorMessage } from '../lib/api-client';
 import { formatDateRange } from '../lib/date-utils';
+import { sortGoalsByPriority } from '../lib/goal-utils';
 import type { Week, WeekSummary } from '../types/week';
 import type { Goal } from '../types/goal';
 
@@ -399,14 +400,12 @@ export default function HomePage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {goals.map((goal) => (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {sortGoalsByPriority(goals).map((goal) => (
               <GoalCard
                 key={goal.id}
                 goal={goal}
                 isWeekClosed={currentWeek.status === 'CLOSED'}
-                onEdit={() => {}}
-                onDelete={() => {}}
                 onProgressChange={handleProgressChange}
               />
             ))}

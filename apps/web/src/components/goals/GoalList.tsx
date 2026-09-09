@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { GoalCard } from './GoalCard';
+import { sortGoalsByPriority } from '../../lib/goal-utils';
 import type { Goal } from '../../types/goal';
 import type { Category } from '../../types/category';
 
@@ -32,6 +33,7 @@ export function GoalList({
   onAddNew,
   onProgressChange,
 }: GoalListProps) {
+  const sortedGoals = sortGoalsByPriority(goals);
   const hasActiveFilters = selectedCategoryId !== 'all' || selectedStatus !== 'all';
 
   function handleResetFilters() {
@@ -148,8 +150,8 @@ export function GoalList({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {goals.map((goal) => (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {sortedGoals.map((goal) => (
             <GoalCard
               key={goal.id}
               goal={goal}
