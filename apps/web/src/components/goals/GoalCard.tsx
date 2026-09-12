@@ -3,6 +3,7 @@
 import React from 'react';
 import { GoalPriorityBadge } from './GoalPriorityBadge';
 import { GoalProgressControl } from './GoalProgressControl';
+import { formatRelativeUpdatedAt } from '../../lib/date-utils';
 import type { Goal } from '../../types/goal';
 
 interface GoalCardProps {
@@ -148,36 +149,42 @@ export function GoalCard({
           </div>
         )}
 
-        {(onEdit || onDelete || isWeekClosed) && (
-          <div className="flex items-center justify-end gap-2 pt-1">
-            {isWeekClosed ? (
-              <span className="text-xs text-slate-400 dark:text-slate-500 italic">
-                Semana fechada (somente leitura)
-              </span>
-            ) : (
-              <div className="flex items-center gap-2">
-                {onEdit && (
-                  <button
-                    type="button"
-                    onClick={() => onEdit(goal)}
-                    className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    Editar
-                  </button>
-                )}
-                {onDelete && (
-                  <button
-                    type="button"
-                    onClick={() => onDelete(goal)}
-                    className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-rose-600 shadow-xs hover:bg-rose-50 dark:border-rose-900/60 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/40 transition-colors"
-                  >
-                    Excluir
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        <div className="flex items-center justify-between gap-2 pt-1">
+          {goal.updatedAt ? (
+            <span className="text-xs text-slate-400 dark:text-slate-500">
+              {formatRelativeUpdatedAt(goal.updatedAt, goal.createdAt)}
+            </span>
+          ) : (
+            <span />
+          )}
+
+          {isWeekClosed ? (
+            <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+              Semana fechada (somente leitura)
+            </span>
+          ) : (onEdit || onDelete) ? (
+            <div className="flex items-center gap-2">
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={() => onEdit(goal)}
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+                >
+                  Editar
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={() => onDelete(goal)}
+                  className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-rose-600 shadow-xs hover:bg-rose-50 dark:border-rose-900/60 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/40 transition-colors"
+                >
+                  Excluir
+                </button>
+              )}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

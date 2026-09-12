@@ -51,3 +51,47 @@ export function getSuggestedStartDate(fromDate: Date = new Date()): string {
 
   return `${year}-${month}-${day}`;
 }
+
+export function formatRelativeUpdatedAt(
+  dateStr: string,
+  createdAtStr?: string,
+  baseDate: Date = new Date(),
+): string {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+
+  if (createdAtStr) {
+    const createdDate = new Date(createdAtStr);
+    if (!isNaN(createdDate.getTime())) {
+      // Se updatedAt for praticamente idêntico a createdAt (diferença <= 1s), nunca houve atualização
+      if (Math.abs(date.getTime() - createdDate.getTime()) <= 1000) {
+        return 'sem atualizações';
+      }
+    }
+  }
+
+  const currentStartOfDay = new Date(
+    baseDate.getFullYear(),
+    baseDate.getMonth(),
+    baseDate.getDate(),
+  ).getTime();
+
+  const targetStartOfDay = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  ).getTime();
+
+  const diffMs = currentStartOfDay - targetStartOfDay;
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 0) {
+    return 'atualizado hoje';
+  }
+  if (diffDays === 1) {
+    return 'atualizado ontem';
+  }
+  return `atualizado há ${diffDays} dias`;
+}
+

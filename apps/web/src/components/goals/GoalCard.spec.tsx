@@ -149,4 +149,38 @@ describe('GoalCard', () => {
     expect(html).toContain('150%');
     expect(html).toContain('border-emerald-300');
   });
+
+  it('deve exibir a indicação de data relativa de atualização', () => {
+    const todayGoal: Goal = {
+      ...binaryGoal,
+      createdAt: '2026-09-01T00:00:00Z',
+      updatedAt: new Date().toISOString(),
+    };
+
+    const html = renderToString(
+      <GoalCard
+        goal={todayGoal}
+        isWeekClosed={false}
+      />
+    );
+
+    expect(html).toContain('atualizado hoje');
+  });
+
+  it('deve exibir "sem atualizações" quando a meta nunca foi modificada desde a criação', () => {
+    const untouchedGoal: Goal = {
+      ...binaryGoal,
+      createdAt: '2026-09-05T10:00:00Z',
+      updatedAt: '2026-09-05T10:00:00Z',
+    };
+
+    const html = renderToString(
+      <GoalCard
+        goal={untouchedGoal}
+        isWeekClosed={false}
+      />
+    );
+
+    expect(html).toContain('sem atualizações');
+  });
 });
