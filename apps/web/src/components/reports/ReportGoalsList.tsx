@@ -46,6 +46,16 @@ export function ReportGoalsList({ goals }: ReportGoalsListProps) {
           {goal.description && (
             <p className="mt-1 text-xs text-slate-500 leading-relaxed dark:text-slate-400">{goal.description}</p>
           )}
+          {goal.notes && (
+            <div className="mt-2 rounded-lg bg-amber-50/80 p-2 text-xs text-amber-900 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-800/50">
+              <span className="font-semibold block text-[10px] uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-0.5">
+                Contexto / Observações
+              </span>
+              <p className="text-xs text-amber-950/90 leading-relaxed whitespace-pre-wrap dark:text-amber-100/90">
+                {goal.notes}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-600 gap-2 dark:border-slate-800 dark:text-slate-400">

@@ -181,6 +181,7 @@ export class WeeksService {
         id: goal.id,
         title: goal.title,
         description: goal.description,
+        notes: goal.notes ?? null,
         type: goal.type,
         priority: goal.priority,
         targetValue: goal.targetValue,

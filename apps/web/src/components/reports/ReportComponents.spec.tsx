@@ -53,6 +53,7 @@ describe('Report Components', () => {
         id: 'g-1',
         title: 'Treinar musculação',
         description: 'Mínimo 45 min',
+        notes: 'Superei a meta com um treino a mais no sábado',
         type: 'BINARY',
         priority: 'HIGH',
         targetValue: 1,
@@ -66,6 +67,7 @@ describe('Report Components', () => {
         id: 'g-2',
         title: 'Ler 100 páginas',
         description: null,
+        notes: 'Não concluído por imprevisto na viagem',
         type: 'QUANTITY',
         priority: 'MEDIUM',
         targetValue: 100,
@@ -128,6 +130,10 @@ describe('Report Components', () => {
       expect(html).toContain('Ler 100 páginas');
       expect(html).toContain('50');
       expect(html).toContain('100');
+
+      expect(html).toContain('Contexto / Observações');
+      expect(html).toContain('Superei a meta com um treino a mais no sábado');
+      expect(html).toContain('Não concluído por imprevisto na viagem');
     });
   });
 });

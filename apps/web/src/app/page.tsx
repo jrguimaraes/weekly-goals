@@ -8,6 +8,7 @@ import { WeekStatusBadge } from '../components/weeks/WeekStatusBadge';
 import { MetricsCard } from '../components/dashboard/MetricsCard';
 import { CategoryMetricsGrid } from '../components/dashboard/CategoryMetricsGrid';
 import { GoalCard } from '../components/goals/GoalCard';
+import { GoalNotesModal } from '../components/goals/GoalNotesModal';
 import { CloseWeekModal } from '../components/weeks/CloseWeekModal';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Alert } from '../components/ui/Alert';
@@ -27,6 +28,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+  const [notesGoal, setNotesGoal] = useState<Goal | null>(null);
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
@@ -407,11 +409,23 @@ export default function HomePage() {
                 goal={goal}
                 isWeekClosed={currentWeek.status === 'CLOSED'}
                 onProgressChange={handleProgressChange}
+                onEditNotes={(g) => setNotesGoal(g)}
               />
             ))}
           </div>
         )}
       </section>
+
+      {/* Modal de Anotações / Contexto */}
+      <GoalNotesModal
+        isOpen={Boolean(notesGoal)}
+        onClose={() => setNotesGoal(null)}
+        goal={notesGoal}
+        onSuccess={(updated) => {
+          setGoals((prev) => prev.map((g) => (g.id === updated.id ? updated : g)));
+          setFeedback(`Observações da meta "${updated.title}" salvas com sucesso!`);
+        }}
+      />
 
       {/* Modal de Fechamento */}
       <CloseWeekModal

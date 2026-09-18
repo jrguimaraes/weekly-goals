@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { GoalFormModal } from './GoalFormModal';
+import { GoalNotesModal } from './GoalNotesModal';
 import { DeleteGoalModal } from './DeleteGoalModal';
 import type { Goal } from '../../types/goal';
 import type { Category } from '../../types/category';
@@ -115,6 +116,55 @@ describe('GoalModals', () => {
       expect(html).toContain('Estudar TypeScript');
       expect(html).toContain('Esta ação é irreversível');
       expect(html).toContain('Confirmar Exclusão');
+    });
+  });
+
+  describe('GoalNotesModal', () => {
+    it('não deve renderizar quando goal for null', () => {
+      const html = renderToString(
+        <GoalNotesModal
+          isOpen={true}
+          onClose={vi.fn()}
+          goal={null}
+          onSuccess={vi.fn()}
+        />
+      );
+
+      expect(html).toBe('');
+    });
+
+    it('não deve renderizar quando isOpen for false', () => {
+      const html = renderToString(
+        <GoalNotesModal
+          isOpen={false}
+          onClose={vi.fn()}
+          goal={mockGoal}
+          onSuccess={vi.fn()}
+        />
+      );
+
+      expect(html).toBe('');
+    });
+
+    it('deve renderizar formulário de anotações com dados da meta', () => {
+      const goalWithNotes: Goal = {
+        ...mockGoal,
+        notes: 'Anotação prévia de teste',
+      };
+
+      const html = renderToString(
+        <GoalNotesModal
+          isOpen={true}
+          onClose={vi.fn()}
+          goal={goalWithNotes}
+          onSuccess={vi.fn()}
+        />
+      );
+
+      expect(html).toContain('Observações e Contexto');
+      expect(html).toContain('Estudar TypeScript');
+      expect(html).toContain('Anotação prévia de teste');
+      expect(html).toContain('Salvar Contexto');
     });
   });
 });

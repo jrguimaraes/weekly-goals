@@ -49,6 +49,19 @@ export class UpdateGoalDto {
   @MaxLength(500, { message: 'description não pode ter mais de 500 caracteres' })
   description?: string;
 
+  @ApiPropertyOptional({
+    description: 'Novas observações ou contexto de execução da meta',
+    maxLength: 1000,
+    example: 'Não concluído devido a imprevisto',
+  })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsOptional()
+  @IsString({ message: 'notes deve ser uma string' })
+  @MaxLength(1000, { message: 'notes não pode ter mais de 1000 caracteres' })
+  notes?: string;
+
 
   @ApiPropertyOptional({
     description: 'Nova prioridade da meta',

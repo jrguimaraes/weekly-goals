@@ -12,6 +12,7 @@ export interface Goal {
   categoryId: string;
   title: string;
   description: string | null;
+  notes?: string | null;
   type: GoalType;
   priority: GoalPriority;
   targetValue: number;
@@ -27,6 +28,7 @@ export interface CreateGoalInput {
   categoryId: string;
   title: string;
   description?: string;
+  notes?: string;
   type: GoalType;
   priority?: GoalPriority;
   targetValue?: number;
@@ -36,6 +38,7 @@ export interface UpdateGoalInput {
   categoryId?: string;
   title?: string;
   description?: string;
+  notes?: string | null;
   priority?: GoalPriority;
   targetValue?: number;
 }

@@ -52,6 +52,7 @@ describe('reportsService', () => {
           id: 'g-1',
           title: 'Treinar 3x',
           description: null,
+          notes: null,
           type: 'QUANTITY',
           priority: 'HIGH',
           targetValue: 3,

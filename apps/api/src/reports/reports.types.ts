@@ -11,6 +11,7 @@ export interface GoalSnapshot {
   id: string;
   title: string;
   description: string | null;
+  notes: string | null;
   type: GoalType;
   priority: GoalPriority;
   targetValue: number;

@@ -82,6 +82,7 @@ export class GoalsService {
         categoryId: dto.categoryId,
         title: dto.title.trim(),
         description: dto.description?.trim() || null,
+        notes: dto.notes?.trim() || null,
         type: dto.type,
         priority: dto.priority ?? GoalPriority.MEDIUM,
         targetValue,
@@ -217,6 +218,7 @@ export class GoalsService {
       categoryId?: string;
       title?: string;
       description?: string | null;
+      notes?: string | null;
       priority?: GoalPriority;
       targetValue?: number;
       status?: GoalStatus;
@@ -231,6 +233,9 @@ export class GoalsService {
     }
     if (dto.description !== undefined) {
       data.description = dto.description ? dto.description.trim() : null;
+    }
+    if (dto.notes !== undefined) {
+      data.notes = dto.notes ? dto.notes.trim() : null;
     }
     if (dto.priority !== undefined) {
       data.priority = dto.priority;

@@ -16,6 +16,7 @@ interface GoalListProps {
   isWeekClosed: boolean;
   onEdit: (goal: Goal) => void;
   onDelete: (goal: Goal) => void;
+  onEditNotes?: (goal: Goal) => void;
   onAddNew: () => void;
   onProgressChange?: (goalId: string, newValue: number) => Promise<void>;
 }
@@ -30,6 +31,7 @@ export function GoalList({
   isWeekClosed,
   onEdit,
   onDelete,
+  onEditNotes,
   onAddNew,
   onProgressChange,
 }: GoalListProps) {
@@ -158,6 +160,7 @@ export function GoalList({
               isWeekClosed={isWeekClosed}
               onEdit={onEdit}
               onDelete={onDelete}
+              onEditNotes={onEditNotes}
               onProgressChange={onProgressChange}
             />
           ))}

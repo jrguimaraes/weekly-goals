@@ -9,6 +9,7 @@ import { categoriesService } from '../../../services/categories.service';
 import { WeekStatusBadge } from '../../../components/weeks/WeekStatusBadge';
 import { GoalList } from '../../../components/goals/GoalList';
 import { GoalFormModal } from '../../../components/goals/GoalFormModal';
+import { GoalNotesModal } from '../../../components/goals/GoalNotesModal';
 import { DeleteGoalModal } from '../../../components/goals/DeleteGoalModal';
 import { CloseWeekModal } from '../../../components/weeks/CloseWeekModal';
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner';
@@ -38,6 +39,7 @@ export default function WeekGoalsPage() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [deletingGoal, setDeletingGoal] = useState<Goal | null>(null);
+  const [notesGoal, setNotesGoal] = useState<Goal | null>(null);
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
   const loadData = useCallback(
@@ -129,6 +131,18 @@ export default function WeekGoalsPage() {
 
   function handleOpenDelete(goal: Goal) {
     setDeletingGoal(goal);
+  }
+
+  function handleOpenNotes(goal: Goal) {
+    setNotesGoal(goal);
+  }
+
+  function handleNotesSuccess(updated: Goal) {
+    setFeedback({
+      message: `Observações da meta "${updated.title}" salvas com sucesso!`,
+      variant: 'success',
+    });
+    setGoals((prev) => prev.map((g) => (g.id === updated.id ? updated : g)));
   }
 
   function handleFormSuccess(savedGoal: Goal) {
@@ -351,6 +365,7 @@ export default function WeekGoalsPage() {
         isWeekClosed={isClosed}
         onEdit={handleOpenEdit}
         onDelete={handleOpenDelete}
+        onEditNotes={handleOpenNotes}
         onAddNew={handleOpenCreate}
         onProgressChange={handleProgressChange}
       />
@@ -366,6 +381,14 @@ export default function WeekGoalsPage() {
         goal={editingGoal}
         categories={categories}
         onSuccess={handleFormSuccess}
+      />
+
+      {/* Modal de Anotações / Contexto */}
+      <GoalNotesModal
+        isOpen={Boolean(notesGoal)}
+        onClose={() => setNotesGoal(null)}
+        goal={notesGoal}
+        onSuccess={handleNotesSuccess}
       />
 
       {/* Modal de Exclusão */}

@@ -82,6 +82,7 @@ describe('GoalsService', () => {
         categoryId: 'cat-1',
         title: 'Beber 2L de água diariamente',
         description: 'Manter hidratação',
+        notes: null,
         type: GoalType.BINARY,
         priority: GoalPriority.MEDIUM,
         targetValue: 1,
@@ -108,6 +109,7 @@ describe('GoalsService', () => {
           categoryId: 'cat-1',
           title: 'Beber 2L de água diariamente',
           description: 'Manter hidratação',
+          notes: null,
           type: GoalType.BINARY,
           priority: GoalPriority.MEDIUM,
           targetValue: 1,
@@ -131,6 +133,7 @@ describe('GoalsService', () => {
         categoryId: 'cat-1',
         title: 'Correr quilômetros',
         description: null,
+        notes: null,
         type: GoalType.QUANTITY,
         priority: GoalPriority.HIGH,
         targetValue: 25,
@@ -158,6 +161,7 @@ describe('GoalsService', () => {
           categoryId: 'cat-1',
           title: 'Correr quilômetros',
           description: null,
+          notes: null,
           type: GoalType.QUANTITY,
           priority: GoalPriority.HIGH,
           targetValue: 25,
@@ -511,6 +515,27 @@ describe('GoalsService', () => {
         include: { category: true },
       });
       expect(result.title).toBe('Correr 12km');
+    });
+
+    it('deve atualizar com sucesso as notas/contexto de uma meta', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+      vi.spyOn(prismaService.goal, 'update').mockResolvedValue({
+        ...mockGoalQuantity,
+        notes: 'Superei a meta correndo no sábado',
+      });
+
+      const result = await service.update('goal-1', {
+        notes: '  Superei a meta correndo no sábado  ',
+      });
+
+      expect(prismaService.goal.update).toHaveBeenCalledWith({
+        where: { id: 'goal-1' },
+        data: {
+          notes: 'Superei a meta correndo no sábado',
+        },
+        include: { category: true },
+      });
+      expect(result.notes).toBe('Superei a meta correndo no sábado');
     });
 
     it('deve permitir atualizar meta em semana ACTIVE', async () => {

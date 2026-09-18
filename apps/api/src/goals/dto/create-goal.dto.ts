@@ -41,6 +41,16 @@ export class CreateGoalDto {
   @MaxLength(500, { message: 'description não pode ter mais de 500 caracteres' })
   description?: string;
 
+  @ApiPropertyOptional({
+    description: 'Contexto de execução ou observações livres da meta',
+    maxLength: 1000,
+    example: 'Superou a meta devido a treino no sábado / Não concluído por imprevisto',
+  })
+  @IsOptional()
+  @IsString({ message: 'notes deve ser uma string' })
+  @MaxLength(1000, { message: 'notes não pode ter mais de 1000 caracteres' })
+  notes?: string;
+
   @ApiProperty({
     description: 'Tipo da meta: BINARY (sim/não, targetValue fixado em 1) ou QUANTITY (numérica progressiva)',
     enum: GoalType,

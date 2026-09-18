@@ -46,6 +46,7 @@ function GoalFormContent({
   );
   const [title, setTitle] = useState(goal?.title || '');
   const [description, setDescription] = useState(goal?.description || '');
+  const [notes, setNotes] = useState(goal?.notes || '');
   const [type, setType] = useState<GoalType>(goal?.type || 'BINARY');
   const [priority, setPriority] = useState<GoalPriority>(goal?.priority || 'MEDIUM');
   const [targetValue, setTargetValue] = useState<string>(
@@ -83,6 +84,7 @@ function GoalFormContent({
           categoryId,
           title: title.trim(),
           description: description.trim() ? description.trim() : undefined,
+          notes: notes.trim() ? notes.trim() : null,
           priority,
           targetValue: parsedTarget,
         };
@@ -93,6 +95,7 @@ function GoalFormContent({
           categoryId,
           title: title.trim(),
           description: description.trim() ? description.trim() : undefined,
+          notes: notes.trim() ? notes.trim() : undefined,
           type,
           priority,
           targetValue: parsedTarget,
@@ -170,6 +173,24 @@ function GoalFormContent({
           placeholder="Ex: Mínimo de 45 minutos por sessão"
           className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
+      </div>
+
+      <div>
+        <label htmlFor="goal-notes" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+          Observações / Contexto de Execução (opcional)
+        </label>
+        <textarea
+          id="goal-notes"
+          rows={2}
+          maxLength={1000}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Ex: Não concluído por imprevisto na viagem / Superei a meta porque treinei no sábado"
+          className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+        />
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Contextualize motivos de não conclusão, superação ou aprendizados da meta.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

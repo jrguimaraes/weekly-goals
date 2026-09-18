@@ -183,4 +183,35 @@ describe('GoalCard', () => {
 
     expect(html).toContain('sem atualizações');
   });
+
+  it('deve exibir bloco de contexto/observações quando goal.notes estiver preenchido', () => {
+    const goalWithNotes: Goal = {
+      ...binaryGoal,
+      notes: 'Não concluí na quarta porque estive doente.',
+    };
+
+    const html = renderToString(
+      <GoalCard
+        goal={goalWithNotes}
+        isWeekClosed={false}
+        onEditNotes={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('Contexto / Observação');
+    expect(html).toContain('Não concluí na quarta porque estive doente.');
+    expect(html).toContain('Contexto');
+  });
+
+  it('deve exibir botão "+ Contexto" quando goal.notes não estiver preenchido', () => {
+    const html = renderToString(
+      <GoalCard
+        goal={quantityGoal}
+        isWeekClosed={false}
+        onEditNotes={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('+ Contexto');
+  });
 });
