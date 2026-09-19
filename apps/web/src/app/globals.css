@@ -11,5 +11,77 @@
   body {
     background: #ffffff !important;
     color: #0f172a !important;
+    font-size: 11.5px !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Open Sans", Arial, sans-serif !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force light theme in print mode regardless of user theme */
+  *,
+  *::before,
+  *::after {
+    color-scheme: light !important;
+    letter-spacing: normal !important;
+  }
+
+  /* Ensure dark mode background/colors are completely neutralized in print */
+  html.dark,
+  body.dark,
+  :root.dark {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    color-scheme: light !important;
+  }
+
+  header,
+  footer,
+  nav,
+  .no-print,
+  .print-hidden {
+    display: none !important;
+  }
+
+  @page {
+    margin: 8mm 10mm;
+    size: A4 portrait;
+  }
+
+  .break-inside-avoid,
+  .page-break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .break-after-avoid,
+  .page-break-after-avoid {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Prevent awkward flex collapsing in print engines */
+  .print-row {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+  }
+
+  .print-main {
+    flex: 1 1 70% !important;
+    width: 70% !important;
+    min-width: 0 !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .print-aside {
+    flex: 0 0 30% !important;
+    width: 30% !important;
+    text-align: right !important;
+    white-space: nowrap !important;
   }
 }

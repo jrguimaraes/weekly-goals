@@ -23,6 +23,21 @@ export function formatDateRange(startStr: string, endStr: string): string {
   return `${formatDate(startStr)} a ${formatDate(endStr)}`;
 }
 
+export function formatReportFileName(startStr: string, endStr: string): string {
+  if (!startStr || !endStr) return 'wg-relatorio';
+  const start = parseIsoDateOnly(startStr);
+  const end = parseIsoDateOnly(endStr);
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  const startPart = `${pad(start.day)}/${pad(start.month)}`;
+  const endPart = `${pad(end.day)}/${pad(end.month)}`;
+
+  if (start.year !== end.year) {
+    return `wg-${startPart}/${start.year}-${endPart}/${end.year}`;
+  }
+  return `wg-${startPart}-${endPart}-${end.year}`;
+}
+
 export function calculateEndDate(startDateStr: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startDateStr)) {
     return '';

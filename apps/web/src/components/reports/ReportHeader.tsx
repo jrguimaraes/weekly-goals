@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { formatDate, formatDateRange } from '../../lib/date-utils';
+import { formatDate, formatDateRange, formatReportFileName } from '../../lib/date-utils';
 import type { ReportSnapshot } from '../../types/report';
 
 interface ReportHeaderProps {
@@ -12,12 +12,35 @@ interface ReportHeaderProps {
 export function ReportHeader({ report }: ReportHeaderProps) {
   function handlePrint() {
     if (typeof window !== 'undefined') {
+      const fileName = formatReportFileName(report.week.startDate, report.week.endDate);
+      const originalTitle =
+        typeof document !== 'undefined' && document.title && !document.title.startsWith('wg-')
+          ? document.title
+          : 'Weekly Goals';
+      const wasDark = document.documentElement.classList.contains('dark');
+      if (wasDark) {
+        document.documentElement.classList.remove('dark');
+      }
+      document.title = fileName;
       window.print();
+      setTimeout(() => {
+        document.title = originalTitle;
+        if (wasDark) {
+          document.documentElement.classList.add('dark');
+        }
+      }, 500);
     }
   }
 
+  const closedDate = report.week.closedAt
+    ? formatDate(report.week.closedAt)
+    : formatDate(report.generatedAt);
+
+  const periodRange = formatDateRange(report.week.startDate, report.week.endDate);
+
   return (
-    <div className="space-y-4 border-b border-slate-200 pb-6 print:border-none print:pb-2 dark:border-slate-800">
+    <div className="space-y-3 border-b border-slate-200 pb-3 print:border-b print:border-slate-300 print:pb-2.5 dark:border-slate-800">
+      {/* Ações de tela (ocultadas na impressão) */}
       <div className="flex items-center justify-between print:hidden">
         <Link
           href={`/weeks/${report.week.id}`}
@@ -41,7 +64,7 @@ export function ReportHeader({ report }: ReportHeaderProps) {
         <button
           type="button"
           onClick={handlePrint}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -55,35 +78,33 @@ export function ReportHeader({ report }: ReportHeaderProps) {
               clipRule="evenodd"
             />
           </svg>
-          Imprimir / Exportar
+          Imprimir / Salvar PDF
         </button>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
-              Relatório Consolidado
-            </span>
-            <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800">
-              Snapshot Imutável
-            </span>
-            <span className="text-xs text-slate-400 dark:text-slate-500">
-              {`v${report.version}`}
-            </span>
-          </div>
-
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
-            {formatDateRange(report.week.startDate, report.week.endDate)}
+      {/* Cabeçalho limpo do documento */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+        <div className="space-y-0.5">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 print:text-indigo-800">
+            Weekly Goals · Retrospectiva Semanal
+          </span>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 print:text-xl dark:text-slate-100">
+            Resumo da Semana
           </h1>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-700 print:text-slate-800 dark:text-slate-300">
+            <span className="font-semibold text-slate-900 dark:text-slate-100">
+              {`Período: ${periodRange}`}
+            </span>
+            <span>·</span>
+            <span>{`Semana encerrada em ${closedDate}`}</span>
+          </div>
+        </div>
 
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Ciclo encerrado e consolidado em{' '}
-            <strong className="text-slate-700 font-semibold dark:text-slate-200">
-              {formatDate(report.generatedAt)}
-            </strong>
-            . Os dados foram preservados deterministicamente.
-          </p>
+        <div className="shrink-0">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 print:border-0 print:bg-transparent print:p-0 print:text-emerald-800">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 print:bg-emerald-700" />
+            Semana Fechada
+          </span>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import {
   calculateEndDate,
   formatDate,
   formatDateRange,
+  formatReportFileName,
   formatRelativeUpdatedAt,
   getSuggestedStartDate,
   parseIsoDateOnly,
@@ -21,6 +22,12 @@ describe('date-utils', () => {
 
   it('deve formatar intervalo de datas', () => {
     expect(formatDateRange('2026-09-07', '2026-09-13')).toBe('07/09/2026 a 13/09/2026');
+  });
+
+  it('deve formatar nome de arquivo de relatório no padrão wg-DD/MM-DD/MM-AAAA', () => {
+    expect(formatReportFileName('2026-09-07', '2026-09-13')).toBe('wg-07/09-13/09-2026');
+    expect(formatReportFileName('2026-12-28', '2027-01-03')).toBe('wg-28/12/2026-03/01/2027');
+    expect(formatReportFileName('', '')).toBe('wg-relatorio');
   });
 
   it('deve calcular endDate exatamente 6 dias após startDate (ciclo de 7 dias)', () => {
