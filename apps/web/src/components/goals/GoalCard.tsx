@@ -30,6 +30,7 @@ export function GoalCard({
       ? Math.round((goal.currentValue / goal.targetValue) * 100)
       : 0;
   const barWidth = Math.min(100, Math.max(0, percentage));
+  const hasNotes = Boolean(goal.notes && goal.notes.trim().length > 0);
 
   return (
     <div
@@ -63,7 +64,7 @@ export function GoalCard({
           )}
         </div>
 
-        {/* Título, Descrição e Contexto */}
+        {/* Título e Descrição */}
         <div className="space-y-1.5">
           <h3 className="text-sm sm:text-base font-semibold text-slate-900 leading-snug dark:text-slate-100">
             {goal.title}
@@ -73,31 +74,6 @@ export function GoalCard({
             <p className="text-xs text-slate-500 leading-relaxed dark:text-slate-400">
               {goal.description}
             </p>
-          )}
-
-          {goal.notes && (
-            <div className="rounded-lg bg-amber-50/80 p-2 text-xs text-amber-900 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-800/50">
-              <div className="flex items-center gap-1 font-semibold text-[10px] uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-0.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-3 w-3 shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                  />
-                </svg>
-                Contexto / Observação
-              </div>
-              <p className="text-xs text-amber-950/90 leading-relaxed whitespace-pre-wrap dark:text-amber-100/90">
-                {goal.notes}
-              </p>
-            </div>
           )}
         </div>
 
@@ -195,24 +171,34 @@ export function GoalCard({
                 <button
                   type="button"
                   onClick={() => onEditNotes(goal)}
-                  className="inline-flex items-center gap-1 justify-center rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
-                  title={goal.notes ? 'Editar anotação de contexto' : 'Adicionar contexto ou anotação'}
+                  className={`inline-flex items-center gap-1 justify-center rounded-lg border px-2 py-1.5 text-xs font-semibold shadow-xs transition-colors ${
+                    hasNotes
+                      ? 'border-amber-200 bg-amber-50/70 text-amber-800 hover:bg-amber-100 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/60'
+                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                  }`}
+                  title={hasNotes ? 'Visualizar e editar contexto' : 'Adicionar contexto ou anotação'}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-3 w-3 text-slate-500 dark:text-slate-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                  <span>{goal.notes ? 'Contexto' : '+ Contexto'}</span>
+                  {hasNotes ? (
+                    <span>💬 Ver contexto</span>
+                  ) : (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3 w-3 text-slate-500 dark:text-slate-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                      <span>+ Contexto</span>
+                    </>
+                  )}
                 </button>
               )}
               {onEdit && (

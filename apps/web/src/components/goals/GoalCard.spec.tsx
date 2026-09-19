@@ -184,7 +184,7 @@ describe('GoalCard', () => {
     expect(html).toContain('sem atualizações');
   });
 
-  it('deve exibir bloco de contexto/observações quando goal.notes estiver preenchido', () => {
+  it('deve exibir indicador discreto "💬 Ver contexto" e não exibir bloco de texto da observação quando goal.notes estiver preenchido', () => {
     const goalWithNotes: Goal = {
       ...binaryGoal,
       notes: 'Não concluí na quarta porque estive doente.',
@@ -198,9 +198,10 @@ describe('GoalCard', () => {
       />
     );
 
-    expect(html).toContain('Contexto / Observação');
-    expect(html).toContain('Não concluí na quarta porque estive doente.');
-    expect(html).toContain('Contexto');
+    expect(html).not.toContain('Contexto / Observação');
+    expect(html).not.toContain('Não concluí na quarta porque estive doente.');
+    expect(html).toContain('💬 Ver contexto');
+    expect(html).not.toContain('+ Contexto');
   });
 
   it('deve exibir botão "+ Contexto" quando goal.notes não estiver preenchido', () => {
@@ -213,5 +214,6 @@ describe('GoalCard', () => {
     );
 
     expect(html).toContain('+ Contexto');
+    expect(html).not.toContain('Ver contexto');
   });
 });
