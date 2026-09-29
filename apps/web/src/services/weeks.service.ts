@@ -1,5 +1,11 @@
 import { apiClient } from '../lib/api-client';
-import type { Week, WeekStatus, CreateWeekInput, WeekSummary } from '../types/week';
+import type {
+  Week,
+  WeekStatus,
+  CreateWeekInput,
+  WeekSummary,
+  CloseWeekResponse,
+} from '../types/week';
 
 export const weeksService = {
   async list(status?: WeekStatus): Promise<Week[]> {
@@ -23,7 +29,7 @@ export const weeksService = {
     return apiClient.post<Week>(`/weeks/${id}/activate`);
   },
 
-  async close(id: string): Promise<Week> {
-    return apiClient.post<Week>(`/weeks/${id}/close`);
+  async close(id: string): Promise<CloseWeekResponse> {
+    return apiClient.post<CloseWeekResponse>(`/weeks/${id}/close`);
   },
 };

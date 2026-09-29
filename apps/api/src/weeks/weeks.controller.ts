@@ -13,7 +13,7 @@ import { Week } from '@prisma/client';
 import { WeekSummaryResponse } from '../metrics/metrics.types.js';
 import { CreateWeekDto } from './dto/create-week.dto.js';
 import { ListWeeksQueryDto } from './dto/list-weeks-query.dto.js';
-import { WeeksService } from './weeks.service.js';
+import { CloseWeekResponse, WeeksService } from './weeks.service.js';
 
 @ApiTags('Weeks')
 @Controller('weeks')
@@ -41,11 +41,18 @@ export class WeeksController {
 
   @Post(':id/close')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Fecha uma semana ativa atomicamente e persiste snapshot do relatório (ACTIVE -> CLOSED)' })
-  @ApiResponse({ status: 200, description: 'Semana fechada e relatório gerado com sucesso' })
+  @ApiOperation({
+    summary:
+      'Fecha uma semana ativa atomicamente, persiste snapshot do relatório e garante próxima semana em DRAFT (ACTIVE -> CLOSED)',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Semana fechada, relatório gerado e próxima semana em DRAFT garantida com sucesso',
+  })
   @ApiResponse({ status: 404, description: 'Semana não encontrada' })
   @ApiResponse({ status: 409, description: 'Semana já fechada ou status incompatível' })
-  async close(@Param('id') id: string): Promise<Week> {
+  async close(@Param('id') id: string): Promise<CloseWeekResponse> {
     return this.weeksService.close(id);
   }
 

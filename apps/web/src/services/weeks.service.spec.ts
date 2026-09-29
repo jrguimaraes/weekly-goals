@@ -93,8 +93,21 @@ describe('weeksService', () => {
   it('deve fechar uma semana via POST /weeks/:id/close', async () => {
     const mockClosed = {
       id: 'w-1',
-      status: 'CLOSED',
+      startDate: '2026-09-07T00:00:00.000Z',
+      endDate: '2026-09-13T00:00:00.000Z',
+      status: 'CLOSED' as const,
       closedAt: '2026-09-13T23:59:59Z',
+      createdAt: '2026-09-07T00:00:00.000Z',
+      updatedAt: '2026-09-13T23:59:59Z',
+      nextWeek: {
+        id: 'w-2',
+        startDate: '2026-09-14T00:00:00.000Z',
+        endDate: '2026-09-20T00:00:00.000Z',
+        status: 'DRAFT' as const,
+        closedAt: null,
+        createdAt: '2026-09-13T23:59:59Z',
+        updatedAt: '2026-09-13T23:59:59Z',
+      },
     };
     vi.mocked(apiClient.post).mockResolvedValue(mockClosed);
 

@@ -173,6 +173,15 @@ describe('WeeksController', () => {
         closedAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date(),
+        nextWeek: {
+          id: 'week-2',
+          startDate: new Date('2026-09-14T00:00:00.000Z'),
+          endDate: new Date('2026-09-20T00:00:00.000Z'),
+          status: WeekStatus.DRAFT,
+          closedAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       };
 
       vi.spyOn(service, 'close').mockResolvedValue(mockResult);

@@ -10,6 +10,11 @@ export interface Week {
   updatedAt: string;
 }
 
+export interface CloseWeekResponse extends Week {
+  nextWeek: Week;
+}
+
+
 export interface CreateWeekInput {
   startDate: string;
 }

@@ -45,6 +45,27 @@ function calculateEndDate(startDate: Date): Date {
   return endDate;
 }
 
+export function calculateNextWeekPeriod(currentEndDate: Date): {
+  nextStartDate: Date;
+  nextEndDate: Date;
+} {
+  const endDate = new Date(currentEndDate);
+  const nextStartDate = new Date(
+    Date.UTC(
+      endDate.getUTCFullYear(),
+      endDate.getUTCMonth(),
+      endDate.getUTCDate() + 1,
+    ),
+  );
+  const nextEndDate = calculateEndDate(nextStartDate);
+  return { nextStartDate, nextEndDate };
+}
+
+export interface CloseWeekResponse extends Week {
+  nextWeek: Week;
+}
+
+
 @Injectable()
 export class WeeksService {
   constructor(
@@ -136,7 +157,7 @@ export class WeeksService {
     });
   }
 
-  async close(id: string): Promise<Week> {
+  async close(id: string): Promise<CloseWeekResponse> {
     const week = await this.findById(id);
 
     if (week.status === WeekStatus.CLOSED) {
@@ -209,7 +230,30 @@ export class WeeksService {
 
       await this.reportsService.create(id, snapshot, REPORT_SCHEMA_VERSION, tx);
 
-      return updatedWeek;
+      const { nextStartDate, nextEndDate } = calculateNextWeekPeriod(week.endDate);
+
+      let nextWeek = await tx.week.findFirst({
+        where: {
+          id: { not: id },
+          startDate: { lte: nextEndDate },
+          endDate: { gte: nextStartDate },
+        },
+      });
+
+      if (!nextWeek) {
+        nextWeek = await tx.week.create({
+          data: {
+            startDate: nextStartDate,
+            endDate: nextEndDate,
+            status: WeekStatus.DRAFT,
+          },
+        });
+      }
+
+      return {
+        ...updatedWeek,
+        nextWeek,
+      };
     });
   }
 

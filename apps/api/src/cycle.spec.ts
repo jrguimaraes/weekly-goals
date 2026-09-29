@@ -241,6 +241,16 @@ describe('Ciclo Completo de Planejamento Semanal (Fluxo Integrado)', () => {
       closedAt: closedDate,
     };
 
+    const nextDraftWeek = {
+      id: 'week-2',
+      startDate: new Date('2026-09-14T00:00:00.000Z'),
+      endDate: new Date('2026-09-20T00:00:00.000Z'),
+      status: WeekStatus.DRAFT,
+      closedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
     const mockTx = {
       goal: {
         findMany: vi.fn().mockResolvedValue([completedGoal1, inProgressGoal2]),
@@ -250,6 +260,8 @@ describe('Ciclo Completo de Planejamento Semanal (Fluxo Integrado)', () => {
       },
       week: {
         update: vi.fn().mockResolvedValue(closedWeek),
+        findFirst: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(nextDraftWeek),
       },
     };
 
@@ -266,6 +278,9 @@ describe('Ciclo Completo de Planejamento Semanal (Fluxo Integrado)', () => {
     const finalizedWeek = await weeksService.close('week-1');
     expect(finalizedWeek.status).toBe(WeekStatus.CLOSED);
     expect(finalizedWeek.closedAt).toBeDefined();
+    expect(finalizedWeek.nextWeek).toBeDefined();
+    expect(finalizedWeek.nextWeek.status).toBe(WeekStatus.DRAFT);
+    expect(finalizedWeek.nextWeek.id).toBe('week-2');
 
     // 9. Consulta de Relatório Persistido Imutável
     const mockReportSnapshot = {

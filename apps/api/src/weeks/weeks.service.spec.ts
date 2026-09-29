@@ -6,7 +6,7 @@ import { MetricsService } from '../metrics/metrics.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ReportsService } from '../reports/reports.service.js';
 import { REPORT_SCHEMA_VERSION } from '../reports/reports.types.js';
-import { WeeksService } from './weeks.service.js';
+import { calculateNextWeekPeriod, WeeksService } from './weeks.service.js';
 
 describe('WeeksService', () => {
   let service: WeeksService;
@@ -477,11 +477,21 @@ describe('WeeksService', () => {
       { id: 'cat-1', name: 'Saúde', position: 0, isActive: true },
     ];
 
-    it('deve fechar uma semana ACTIVE com sucesso, atualizando status para CLOSED e persistindo relatório via transação', async () => {
+    it('deve fechar uma semana ACTIVE com sucesso, gerando relatório e criando a próxima semana em DRAFT', async () => {
       const closedWeek = {
         ...activeWeek,
         status: WeekStatus.CLOSED,
         closedAt: new Date(),
+      };
+
+      const nextWeek = {
+        id: 'week-2',
+        startDate: new Date('2026-09-14T00:00:00.000Z'),
+        endDate: new Date('2026-09-20T00:00:00.000Z'),
+        status: WeekStatus.DRAFT,
+        closedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       const mockTx = {
@@ -493,6 +503,8 @@ describe('WeeksService', () => {
         },
         week: {
           update: vi.fn().mockResolvedValue(closedWeek),
+          findFirst: vi.fn().mockResolvedValue(null),
+          create: vi.fn().mockResolvedValue(nextWeek),
         },
       };
 
@@ -556,7 +568,129 @@ describe('WeeksService', () => {
         REPORT_SCHEMA_VERSION,
         mockTx,
       );
-      expect(result).toEqual(closedWeek);
+      expect(mockTx.week.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: { not: 'week-1' },
+          startDate: { lte: new Date(Date.UTC(2026, 8, 20)) },
+          endDate: { gte: new Date(Date.UTC(2026, 8, 14)) },
+        },
+      });
+      expect(mockTx.week.create).toHaveBeenCalledWith({
+        data: {
+          startDate: new Date(Date.UTC(2026, 8, 14)),
+          endDate: new Date(Date.UTC(2026, 8, 20)),
+          status: WeekStatus.DRAFT,
+        },
+      });
+      expect(result).toEqual({
+        ...closedWeek,
+        nextWeek,
+      });
+    });
+
+    it('deve fechar uma semana ACTIVE e reaproveitar a próxima semana caso ela já exista para o período, sem duplicar', async () => {
+      const closedWeek = {
+        ...activeWeek,
+        status: WeekStatus.CLOSED,
+        closedAt: new Date(),
+      };
+
+      const existingNextWeek = {
+        id: 'week-existing-draft',
+        startDate: new Date('2026-09-14T00:00:00.000Z'),
+        endDate: new Date('2026-09-20T00:00:00.000Z'),
+        status: WeekStatus.DRAFT,
+        closedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const mockTx = {
+        goal: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        category: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        week: {
+          update: vi.fn().mockResolvedValue(closedWeek),
+          findFirst: vi.fn().mockResolvedValue(existingNextWeek),
+          create: vi.fn(),
+        },
+      };
+
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(activeWeek);
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(mockTx));
+      vi.spyOn(reportsService, 'create').mockResolvedValue({} as any);
+
+      const result = await service.close('week-1');
+
+      expect(mockTx.week.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: { not: 'week-1' },
+          startDate: { lte: new Date(Date.UTC(2026, 8, 20)) },
+          endDate: { gte: new Date(Date.UTC(2026, 8, 14)) },
+        },
+      });
+      expect(mockTx.week.create).not.toHaveBeenCalled();
+      expect(result.nextWeek).toEqual(existingNextWeek);
+      expect(result.status).toBe(WeekStatus.CLOSED);
+    });
+
+    it('deve fechar a semana e calcular corretamente as datas no cenário de exemplo (22/09/2026 a 28/09/2026 -> 29/09/2026 a 05/10/2026)', async () => {
+      const currentActiveWeek = {
+        id: 'week-user-example',
+        startDate: new Date('2026-09-22T00:00:00.000Z'),
+        endDate: new Date('2026-09-28T00:00:00.000Z'),
+        status: WeekStatus.ACTIVE,
+        closedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const expectedNextDraft = {
+        id: 'week-user-next',
+        startDate: new Date('2026-09-29T00:00:00.000Z'),
+        endDate: new Date('2026-10-05T00:00:00.000Z'),
+        status: WeekStatus.DRAFT,
+        closedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const mockTx = {
+        goal: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        category: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        week: {
+          update: vi.fn().mockResolvedValue({
+            ...currentActiveWeek,
+            status: WeekStatus.CLOSED,
+            closedAt: new Date(),
+          }),
+          findFirst: vi.fn().mockResolvedValue(null),
+          create: vi.fn().mockResolvedValue(expectedNextDraft),
+        },
+      };
+
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(currentActiveWeek);
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(mockTx));
+      vi.spyOn(reportsService, 'create').mockResolvedValue({} as any);
+
+      const result = await service.close('week-user-example');
+
+      expect(mockTx.week.create).toHaveBeenCalledWith({
+        data: {
+          startDate: new Date(Date.UTC(2026, 8, 29)),
+          endDate: new Date(Date.UTC(2026, 9, 5)),
+          status: WeekStatus.DRAFT,
+        },
+      });
+      expect(result.nextWeek).toEqual(expectedNextDraft);
+      expect(result.nextWeek.status).toBe(WeekStatus.DRAFT);
     });
 
     it('deve lançar NotFoundException quando a semana não existir', async () => {
@@ -615,5 +749,39 @@ describe('WeeksService', () => {
       );
     });
   });
+
+  describe('calculateNextWeekPeriod', () => {
+    it('deve calcular o próximo período de 7 dias com base no endDate da semana atual', () => {
+      // 22/09/2026 a 28/09/2026 -> 29/09/2026 a 05/10/2026
+      const currentEndDate = new Date(Date.UTC(2026, 8, 28));
+      const { nextStartDate, nextEndDate } = calculateNextWeekPeriod(currentEndDate);
+
+      expect(nextStartDate.toISOString().slice(0, 10)).toBe('2026-09-29');
+      expect(nextEndDate.toISOString().slice(0, 10)).toBe('2026-10-05');
+      // Intervalo deve ser exatamente de 7 dias (6 dias de diferença)
+      const diffDays =
+        (nextEndDate.getTime() - nextStartDate.getTime()) / (1000 * 60 * 60 * 24);
+      expect(diffDays).toBe(6);
+    });
+
+    it('deve lidar corretamente com a virada de mês', () => {
+      // 25/10/2026 a 31/10/2026 -> 01/11/2026 a 07/11/2026
+      const currentEndDate = new Date(Date.UTC(2026, 9, 31));
+      const { nextStartDate, nextEndDate } = calculateNextWeekPeriod(currentEndDate);
+
+      expect(nextStartDate.toISOString().slice(0, 10)).toBe('2026-11-01');
+      expect(nextEndDate.toISOString().slice(0, 10)).toBe('2026-11-07');
+    });
+
+    it('deve lidar corretamente com a virada de ano', () => {
+      // 25/12/2026 a 31/12/2026 -> 01/01/2027 a 07/01/2027
+      const currentEndDate = new Date(Date.UTC(2026, 11, 31));
+      const { nextStartDate, nextEndDate } = calculateNextWeekPeriod(currentEndDate);
+
+      expect(nextStartDate.toISOString().slice(0, 10)).toBe('2027-01-01');
+      expect(nextEndDate.toISOString().slice(0, 10)).toBe('2027-01-07');
+    });
+  });
 });
+
 
