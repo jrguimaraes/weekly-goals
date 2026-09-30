@@ -2,6 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { GoalPriority } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -80,5 +81,13 @@ export class UpdateGoalDto {
   @IsNumber({}, { message: 'targetValue deve ser um número' })
   @IsPositive({ message: 'targetValue deve ser maior que 0' })
   targetValue?: number;
+
+  @ApiPropertyOptional({
+    description: 'Permite ativar ou desativar a recorrência semanal da meta (permitido apenas em semanas com status DRAFT)',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'isRecurring deve ser um booleano' })
+  isRecurring?: boolean;
 }
 

@@ -414,6 +414,7 @@ export default function WeekGoalsPage() {
         weekId={week.id}
         goal={editingGoal}
         categories={categories}
+        isWeekDraft={week.status === 'DRAFT'}
         onSuccess={handleFormSuccess}
       />
 

@@ -66,6 +66,7 @@ describe('GoalModals', () => {
       expect(html).toContain('Nova Meta Semanal');
       expect(html).toContain('Criar Meta');
       expect(html).toContain('Estudos');
+      expect(html).toContain('Repetir semanalmente');
     });
 
     it('deve renderizar modal de edição com dados pré-preenchidos', () => {
@@ -85,6 +86,23 @@ describe('GoalModals', () => {
       expect(html).toContain('Estudar TypeScript');
       expect(html).toContain('O tipo da meta não pode ser alterado após a criação.');
       expect(html).toContain('disabled=""');
+      expect(html).toContain('Repetir semanalmente');
+    });
+
+    it('deve desabilitar repetição semanal ao editar meta em semana não DRAFT', () => {
+      const html = renderToString(
+        <GoalFormModal
+          isOpen={true}
+          onClose={vi.fn()}
+          weekId="w-1"
+          goal={mockGoal}
+          categories={mockCategories}
+          isWeekDraft={false}
+          onSuccess={vi.fn()}
+        />
+      );
+
+      expect(html).toContain('A recorrência só pode ser alterada em semanas em planejamento (DRAFT).');
     });
   });
 

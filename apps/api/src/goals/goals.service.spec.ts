@@ -39,6 +39,11 @@ describe('GoalsService', () => {
             category: {
               findUnique: vi.fn(),
             },
+            recurringGoal: {
+              findMany: vi.fn(),
+              create: vi.fn(),
+              update: vi.fn(),
+            },
             $transaction: vi.fn(),
           },
 
@@ -311,6 +316,127 @@ describe('GoalsService', () => {
           targetValue: 0,
         }),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve criar apenas a Goal sem tocar em RecurringGoal quando isRecurring for falso ou omitido', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(mockWeek);
+      vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(mockCategory);
+      const createdGoal = { id: 'g-normal', title: 'Normal' } as any;
+      vi.spyOn(prismaService.goal, 'create').mockResolvedValue(createdGoal);
+
+      const result = await service.create('week-1', {
+        categoryId: 'cat-1',
+        title: 'Meta normal',
+        type: GoalType.BINARY,
+        isRecurring: false,
+      });
+
+      expect(prismaService.goal.create).toHaveBeenCalled();
+      expect(prismaService.$transaction).not.toHaveBeenCalled();
+      expect(result).toEqual(createdGoal);
+    });
+
+    it('deve criar a Goal e a RecurringGoal dentro de transação quando isRecurring for verdadeiro', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(mockWeek);
+      vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(mockCategory);
+
+      const createdGoal = { id: 'g-1', title: 'Estudar Anki' } as any;
+      const txMock = {
+        goal: {
+          create: vi.fn().mockResolvedValue(createdGoal),
+        },
+        recurringGoal: {
+          findMany: vi.fn().mockResolvedValue([]),
+          create: vi.fn().mockResolvedValue({ id: 'rec-1' }),
+          update: vi.fn(),
+        },
+      };
+
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (callback: any) => {
+        return callback(txMock);
+      });
+
+      const result = await service.create('week-1', {
+        categoryId: 'cat-1',
+        title: 'Estudar Anki',
+        description: 'Cards diários',
+        type: GoalType.QUANTITY,
+        targetValue: 5,
+        priority: GoalPriority.HIGH,
+        isRecurring: true,
+      });
+
+      expect(prismaService.$transaction).toHaveBeenCalled();
+      expect(txMock.goal.create).toHaveBeenCalledWith({
+        data: {
+          weekId: 'week-1',
+          categoryId: 'cat-1',
+          title: 'Estudar Anki',
+          description: 'Cards diários',
+          notes: null,
+          type: GoalType.QUANTITY,
+          priority: GoalPriority.HIGH,
+          targetValue: 5,
+          currentValue: 0,
+          status: GoalStatus.PENDING,
+        },
+        include: { category: true },
+      });
+      expect(txMock.recurringGoal.create).toHaveBeenCalledWith({
+        data: {
+          categoryId: 'cat-1',
+          title: 'Estudar Anki',
+          description: 'Cards diários',
+          type: GoalType.QUANTITY,
+          priority: GoalPriority.HIGH,
+          targetValue: 5,
+          active: true,
+        },
+      });
+      expect(result).toEqual(createdGoal);
+    });
+
+    it('deve reativar e atualizar RecurringGoal existente ao criar Goal com isRecurring: true', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(mockWeek);
+      vi.spyOn(prismaService.category, 'findUnique').mockResolvedValue(mockCategory);
+
+      const createdGoal = { id: 'g-1', title: 'Estudar Anki' } as any;
+      const existingRec = { id: 'rec-1', title: 'estudar anki', categoryId: 'cat-1', active: false };
+      const txMock = {
+        goal: {
+          create: vi.fn().mockResolvedValue(createdGoal),
+        },
+        recurringGoal: {
+          findMany: vi.fn().mockResolvedValue([existingRec]),
+          create: vi.fn(),
+          update: vi.fn().mockResolvedValue({ ...existingRec, active: true }),
+        },
+      };
+
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (callback: any) => {
+        return callback(txMock);
+      });
+
+      const result = await service.create('week-1', {
+        categoryId: 'cat-1',
+        title: 'Estudar Anki',
+        type: GoalType.QUANTITY,
+        targetValue: 10,
+        isRecurring: true,
+      });
+
+      expect(txMock.recurringGoal.update).toHaveBeenCalledWith({
+        where: { id: 'rec-1' },
+        data: {
+          active: true,
+          description: null,
+          type: GoalType.QUANTITY,
+          priority: GoalPriority.MEDIUM,
+          targetValue: 10,
+        },
+      });
+      expect(txMock.recurringGoal.create).not.toHaveBeenCalled();
+      expect(result).toEqual(createdGoal);
     });
   });
 
@@ -770,6 +896,148 @@ describe('GoalsService', () => {
       expect(result.status).toBe(GoalStatus.PENDING);
       expect(result.targetValue).toBe(20);
       expect(result.completedAt).toBeNull();
+    });
+
+    it('deve transformar uma Goal em recorrente durante a edição em semana DRAFT ao passar isRecurring: true', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+
+      const txMock = {
+        goal: {
+          update: vi.fn().mockResolvedValue(mockGoalQuantity),
+        },
+        recurringGoal: {
+          findMany: vi.fn().mockResolvedValue([]),
+          create: vi.fn().mockResolvedValue({ id: 'rec-new' }),
+          update: vi.fn(),
+        },
+      };
+
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(txMock));
+
+      const result = await service.update('goal-1', { isRecurring: true });
+
+      expect(prismaService.$transaction).toHaveBeenCalled();
+      expect(txMock.recurringGoal.create).toHaveBeenCalledWith({
+        data: {
+          categoryId: 'cat-1',
+          title: 'Correr 10km',
+          description: 'Na praia',
+          type: GoalType.QUANTITY,
+          priority: GoalPriority.MEDIUM,
+          targetValue: 10,
+          active: true,
+        },
+      });
+      expect(result).toEqual(mockGoalQuantity);
+    });
+
+    it('deve desativar a recorrência correspondente ao passar isRecurring: false durante a edição em semana DRAFT', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+
+      const existingRec = {
+        id: 'rec-1',
+        categoryId: 'cat-1',
+        title: 'correr 10km',
+        active: true,
+      };
+
+      const txMock = {
+        goal: {
+          update: vi.fn().mockResolvedValue(mockGoalQuantity),
+        },
+        recurringGoal: {
+          findMany: vi.fn().mockResolvedValue([existingRec]),
+          update: vi.fn().mockResolvedValue({ ...existingRec, active: false }),
+        },
+      };
+
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(txMock));
+
+      await service.update('goal-1', { isRecurring: false });
+
+      expect(txMock.recurringGoal.update).toHaveBeenCalledWith({
+        where: { id: 'rec-1' },
+        data: { active: false },
+      });
+    });
+
+    it('não deve permitir alterar recorrência pela edição da Goal em semana ACTIVE', async () => {
+      const activeGoal = {
+        ...mockGoalQuantity,
+        week: mockWeekActive,
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(activeGoal);
+
+      await expect(
+        service.update('goal-1', { isRecurring: true }),
+      ).rejects.toThrow(
+        new ConflictException(
+          'A recorrência de uma meta só pode ser alterada enquanto a semana estiver em planejamento (DRAFT).',
+        ),
+      );
+    });
+
+    it('não deve permitir alterar recorrência pela edição da Goal em semana CLOSED', async () => {
+      const closedGoal = {
+        ...mockGoalQuantity,
+        week: mockWeekClosed,
+      };
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(closedGoal);
+
+      await expect(
+        service.update('goal-1', { isRecurring: true }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('editar uma Goal semanal que já seja recorrente não deve atualizar automaticamente os dados da RecurringGoal', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+      vi.spyOn(prismaService.goal, 'update').mockResolvedValue({
+        ...mockGoalQuantity,
+        targetValue: 15,
+      });
+
+      // Usuário edita o targetValue semanal de 10 para 15 sem mexer na recorrência (isRecurring undefined)
+      await service.update('goal-1', { targetValue: 15 });
+
+      expect(prismaService.$transaction).not.toHaveBeenCalled();
+      expect(prismaService.goal.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'goal-1' },
+          data: expect.objectContaining({ targetValue: 15 }),
+        }),
+      );
+    });
+
+    it('evita criação de RecurringGoal duplicada ao marcar isRecurring: true se já existir uma correspondente', async () => {
+      vi.spyOn(prismaService.goal, 'findUnique').mockResolvedValue(mockGoalQuantity);
+
+      const existingPausedRec = {
+        id: 'rec-existing',
+        categoryId: 'cat-1',
+        title: 'correr 10km',
+        active: false,
+      };
+
+      const txMock = {
+        goal: {
+          update: vi.fn().mockResolvedValue(mockGoalQuantity),
+        },
+        recurringGoal: {
+          findMany: vi.fn().mockResolvedValue([existingPausedRec]),
+          create: vi.fn(),
+          update: vi.fn().mockResolvedValue({ ...existingPausedRec, active: true }),
+        },
+      };
+
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(txMock));
+
+      await service.update('goal-1', { isRecurring: true });
+
+      expect(txMock.recurringGoal.create).not.toHaveBeenCalled();
+      expect(txMock.recurringGoal.update).toHaveBeenCalledWith({
+        where: { id: 'rec-existing' },
+        data: { active: true },
+      });
     });
   });
 

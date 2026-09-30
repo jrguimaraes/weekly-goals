@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Alert } from '../ui/Alert';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { goalsService } from '../../services/goals.service';
+import { recurringGoalsService } from '../../services/recurring-goals.service';
 import { getApiErrorMessage } from '../../lib/api-client';
 import type { Category } from '../../types/category';
 import type {
@@ -21,6 +22,7 @@ interface GoalFormModalProps {
   weekId: string;
   goal?: Goal | null;
   categories: Category[];
+  isWeekDraft?: boolean;
   onSuccess: (savedGoal: Goal) => void;
 }
 
@@ -28,6 +30,7 @@ interface GoalFormContentProps {
   weekId: string;
   goal?: Goal | null;
   categories: Category[];
+  isWeekDraft?: boolean;
   onClose: () => void;
   onSuccess: (savedGoal: Goal) => void;
 }
@@ -36,10 +39,12 @@ function GoalFormContent({
   weekId,
   goal,
   categories,
+  isWeekDraft = true,
   onClose,
   onSuccess,
 }: GoalFormContentProps) {
   const isEditing = Boolean(goal);
+  const isDraft = isWeekDraft !== false;
 
   const [categoryId, setCategoryId] = useState(
     goal?.categoryId || (categories.length > 0 ? categories[0].id : '')
@@ -52,6 +57,30 @@ function GoalFormContent({
   const [targetValue, setTargetValue] = useState<string>(
     goal ? String(goal.targetValue) : '1'
   );
+  const [isRecurring, setIsRecurring] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (goal) {
+      recurringGoalsService
+        .list()
+        .then((list) => {
+          if (!isMounted) return;
+          const normalizedTitle = goal.title.trim().toLowerCase();
+          const match = list.find(
+            (r) =>
+              r.active &&
+              r.categoryId === goal.categoryId &&
+              r.title.trim().toLowerCase() === normalizedTitle,
+          );
+          setIsRecurring(Boolean(match));
+        })
+        .catch(() => {});
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [goal]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +116,7 @@ function GoalFormContent({
           notes: notes.trim() ? notes.trim() : null,
           priority,
           targetValue: parsedTarget,
+          isRecurring: isDraft ? isRecurring : undefined,
         };
         const updated = await goalsService.update(goal.id, payload);
         onSuccess(updated);
@@ -99,6 +129,7 @@ function GoalFormContent({
           type,
           priority,
           targetValue: parsedTarget,
+          isRecurring,
         };
         const created = await goalsService.create(weekId, payload);
         onSuccess(created);
@@ -266,6 +297,48 @@ function GoalFormContent({
         </div>
       )}
 
+      {(!isEditing || isDraft) ? (
+        <div className="flex items-start gap-2 pt-2">
+          <input
+            type="checkbox"
+            id="goal-is-recurring"
+            checked={isRecurring}
+            onChange={(e) => setIsRecurring(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
+          />
+          <label
+            htmlFor="goal-is-recurring"
+            className="text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer select-none"
+          >
+            Repetir semanalmente
+            <span className="block text-[11px] font-normal text-slate-500 dark:text-slate-400">
+              {isEditing
+                ? 'Ativa ou desativa a repetição automática desta meta nas próximas semanas.'
+                : 'Gera automaticamente esta meta a cada nova semana planejada.'}
+            </span>
+          </label>
+        </div>
+      ) : (
+        <div className="flex items-start gap-2 pt-2 opacity-60">
+          <input
+            type="checkbox"
+            id="goal-is-recurring"
+            checked={isRecurring}
+            disabled
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 dark:border-slate-600 dark:bg-slate-700 cursor-not-allowed"
+          />
+          <label
+            htmlFor="goal-is-recurring"
+            className="text-xs font-medium text-slate-700 dark:text-slate-300 cursor-not-allowed"
+          >
+            Repetir semanalmente
+            <span className="block text-[11px] font-normal text-slate-500 dark:text-slate-400">
+              A recorrência só pode ser alterada em semanas em planejamento (DRAFT).
+            </span>
+          </label>
+        </div>
+      )}
+
       <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
         <button
           type="button"
@@ -294,6 +367,7 @@ export function GoalFormModal({
   weekId,
   goal,
   categories,
+  isWeekDraft = true,
   onSuccess,
 }: GoalFormModalProps) {
   return (
@@ -313,6 +387,7 @@ export function GoalFormModal({
         weekId={weekId}
         goal={goal}
         categories={categories}
+        isWeekDraft={isWeekDraft}
         onClose={onClose}
         onSuccess={onSuccess}
       />

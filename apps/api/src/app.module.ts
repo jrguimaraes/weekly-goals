@@ -8,6 +8,7 @@ import { GoalsModule } from './goals/goals.module.js';
 import { HealthModule } from './health/health.module.js';
 import { MetricsModule } from './metrics/metrics.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { RecurringGoalsModule } from './recurring-goals/recurring-goals.module.js';
 import { ReportsModule } from './reports/reports.module.js';
 import { WeeksModule } from './weeks/weeks.module.js';
 
@@ -22,6 +23,7 @@ import { WeeksModule } from './weeks/weeks.module.js';
     CategoriesModule,
     WeeksModule,
     GoalsModule,
+    RecurringGoalsModule,
     MetricsModule,
     ReportsModule,
   ],

@@ -13,9 +13,9 @@ import {
   ValidateIf,
 } from 'class-validator';
 
-export class CreateGoalDto {
+export class CreateRecurringGoalDto {
   @ApiProperty({
-    description: 'UUID da categoria à qual a meta pertence',
+    description: 'UUID da categoria à qual a meta recorrente pertence',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @IsNotEmpty({ message: 'categoryId é obrigatório' })
@@ -23,9 +23,9 @@ export class CreateGoalDto {
   categoryId!: string;
 
   @ApiProperty({
-    description: 'Título descritivo da meta',
+    description: 'Título descritivo da meta recorrente',
     maxLength: 100,
-    example: 'Treinar musculação 4 vezes',
+    example: 'Estudar inglês no Anki',
   })
   @IsNotEmpty({ message: 'title é obrigatório' })
   @IsString({ message: 'title deve ser uma string' })
@@ -35,27 +35,17 @@ export class CreateGoalDto {
   @ApiPropertyOptional({
     description: 'Detalhamento ou critérios de sucesso da meta',
     maxLength: 500,
-    example: 'Mínimo de 50 minutos por sessão',
+    example: 'Completar revisões diárias',
   })
   @IsOptional()
   @IsString({ message: 'description deve ser uma string' })
   @MaxLength(500, { message: 'description não pode ter mais de 500 caracteres' })
   description?: string;
 
-  @ApiPropertyOptional({
-    description: 'Contexto de execução ou observações livres da meta',
-    maxLength: 1000,
-    example: 'Superou a meta devido a treino no sábado / Não concluído por imprevisto',
-  })
-  @IsOptional()
-  @IsString({ message: 'notes deve ser uma string' })
-  @MaxLength(1000, { message: 'notes não pode ter mais de 1000 caracteres' })
-  notes?: string;
-
   @ApiProperty({
     description: 'Tipo da meta: BINARY (sim/não, targetValue fixado em 1) ou QUANTITY (numérica progressiva)',
     enum: GoalType,
-    example: GoalType.BINARY,
+    example: GoalType.QUANTITY,
   })
   @IsNotEmpty({ message: 'type é obrigatório' })
   @IsEnum(GoalType, { message: 'type deve ser BINARY ou QUANTITY' })
@@ -73,20 +63,19 @@ export class CreateGoalDto {
 
   @ApiPropertyOptional({
     description: 'Meta numérica (obrigatória > 0 para QUANTITY; opcional e fixada em 1 para BINARY)',
-    example: 1,
+    example: 5,
   })
-  @ValidateIf((o: CreateGoalDto) => o.type === GoalType.QUANTITY || o.targetValue !== undefined)
+  @ValidateIf((o: CreateRecurringGoalDto) => o.type === GoalType.QUANTITY || o.targetValue !== undefined)
   @IsNotEmpty({ message: 'targetValue é obrigatório para metas QUANTITY' })
   @IsNumber({}, { message: 'targetValue deve ser um número' })
   @IsPositive({ message: 'targetValue deve ser maior que 0' })
   targetValue?: number;
 
   @ApiPropertyOptional({
-    description: 'Indica se a meta deve ser repetida semanalmente gerando uma RecurringGoal',
-    example: true,
+    description: 'Status de ativação da recorrência (default: true)',
+    default: true,
   })
   @IsOptional()
-  @IsBoolean({ message: 'isRecurring deve ser um booleano' })
-  isRecurring?: boolean;
+  @IsBoolean({ message: 'active deve ser um booleano' })
+  active?: boolean;
 }
-

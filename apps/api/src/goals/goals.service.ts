@@ -103,19 +103,68 @@ export class GoalsService {
       throw new BadRequestException('Tipo de meta inválido.');
     }
 
+    const goalData = {
+      weekId,
+      categoryId: dto.categoryId,
+      title: dto.title.trim(),
+      description: dto.description?.trim() || null,
+      notes: dto.notes?.trim() || null,
+      type: dto.type,
+      priority: dto.priority ?? GoalPriority.MEDIUM,
+      targetValue,
+      currentValue: 0,
+      status: GoalStatus.PENDING,
+    };
+
+    if (dto.isRecurring) {
+      return this.prisma.$transaction(async (tx) => {
+        const goal = await tx.goal.create({
+          data: goalData,
+          include: {
+            category: true,
+          },
+        });
+
+        const normalizedTitle = dto.title.trim().toLowerCase();
+        const existingRecurring = await tx.recurringGoal.findMany({
+          where: { categoryId: dto.categoryId },
+        });
+
+        const match = existingRecurring.find(
+          (r) => r.title.trim().toLowerCase() === normalizedTitle,
+        );
+
+        if (match) {
+          await tx.recurringGoal.update({
+            where: { id: match.id },
+            data: {
+              active: true,
+              description: dto.description?.trim() || null,
+              type: dto.type,
+              priority: dto.priority ?? GoalPriority.MEDIUM,
+              targetValue,
+            },
+          });
+        } else {
+          await tx.recurringGoal.create({
+            data: {
+              categoryId: dto.categoryId,
+              title: dto.title.trim(),
+              description: dto.description?.trim() || null,
+              type: dto.type,
+              priority: dto.priority ?? GoalPriority.MEDIUM,
+              targetValue,
+              active: true,
+            },
+          });
+        }
+
+        return goal;
+      });
+    }
+
     return this.prisma.goal.create({
-      data: {
-        weekId,
-        categoryId: dto.categoryId,
-        title: dto.title.trim(),
-        description: dto.description?.trim() || null,
-        notes: dto.notes?.trim() || null,
-        type: dto.type,
-        priority: dto.priority ?? GoalPriority.MEDIUM,
-        targetValue,
-        currentValue: 0,
-        status: GoalStatus.PENDING,
-      },
+      data: goalData,
       include: {
         category: true,
       },
@@ -275,6 +324,76 @@ export class GoalsService {
     }
     if (completedAt !== goal.completedAt) {
       data.completedAt = completedAt;
+    }
+
+    if (dto.isRecurring !== undefined) {
+      if (goal.week.status !== WeekStatus.DRAFT) {
+        throw new ConflictException(
+          'A recorrência de uma meta só pode ser alterada enquanto a semana estiver em planejamento (DRAFT).',
+        );
+      }
+
+      return this.prisma.$transaction(async (tx) => {
+        const updatedGoal = await tx.goal.update({
+          where: { id },
+          data,
+          include: {
+            category: true,
+          },
+        });
+
+        const effectiveCategoryId = data.categoryId ?? goal.categoryId;
+        const effectiveTitle = (data.title ?? goal.title).trim();
+        const normalizedTitle = effectiveTitle.toLowerCase();
+        const originalNormalizedTitle = goal.title.trim().toLowerCase();
+
+        const existingRecurring = await tx.recurringGoal.findMany({
+          where: {
+            OR: [
+              { categoryId: effectiveCategoryId },
+              { categoryId: goal.categoryId },
+            ],
+          },
+        });
+
+        const match = existingRecurring.find(
+          (r) =>
+            r.title.trim().toLowerCase() === normalizedTitle ||
+            r.title.trim().toLowerCase() === originalNormalizedTitle,
+        );
+
+        if (dto.isRecurring === true) {
+          if (match) {
+            if (!match.active) {
+              await tx.recurringGoal.update({
+                where: { id: match.id },
+                data: { active: true },
+              });
+            }
+          } else {
+            await tx.recurringGoal.create({
+              data: {
+                categoryId: effectiveCategoryId,
+                title: effectiveTitle,
+                description: data.description !== undefined ? data.description : goal.description,
+                type: goal.type,
+                priority: data.priority ?? goal.priority,
+                targetValue,
+                active: true,
+              },
+            });
+          }
+        } else if (dto.isRecurring === false) {
+          if (match && match.active) {
+            await tx.recurringGoal.update({
+              where: { id: match.id },
+              data: { active: false },
+            });
+          }
+        }
+
+        return updatedGoal;
+      });
     }
 
     return this.prisma.goal.update({

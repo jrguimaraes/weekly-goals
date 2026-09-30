@@ -32,6 +32,7 @@ export interface CreateGoalInput {
   type: GoalType;
   priority?: GoalPriority;
   targetValue?: number;
+  isRecurring?: boolean;
 }
 
 export interface UpdateGoalInput {
@@ -41,6 +42,7 @@ export interface UpdateGoalInput {
   notes?: string | null;
   priority?: GoalPriority;
   targetValue?: number;
+  isRecurring?: boolean;
 }
 
 export interface GoalFilters {

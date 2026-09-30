@@ -254,6 +254,7 @@ describe('Ciclo Completo de Planejamento Semanal (Fluxo Integrado)', () => {
     const mockTx = {
       goal: {
         findMany: vi.fn().mockResolvedValue([completedGoal1, inProgressGoal2]),
+        create: vi.fn(),
       },
       category: {
         findMany: vi.fn().mockResolvedValue([catSaude, catEstudos]),
@@ -262,6 +263,9 @@ describe('Ciclo Completo de Planejamento Semanal (Fluxo Integrado)', () => {
         update: vi.fn().mockResolvedValue(closedWeek),
         findFirst: vi.fn().mockResolvedValue(null),
         create: vi.fn().mockResolvedValue(nextDraftWeek),
+      },
+      recurringGoal: {
+        findMany: vi.fn().mockResolvedValue([]),
       },
     };
 

@@ -16,6 +16,7 @@ model Category {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   goals       Goal[]
+  recurringGoals RecurringGoal[]
 
   @@map("categories")
 }
@@ -92,3 +93,22 @@ model WeekReport {
 
   @@map("week_reports")
 }
+
+model RecurringGoal {
+  id          String       @id @default(uuid())
+  categoryId  String
+  title       String
+  description String?
+  type        GoalType
+  priority    GoalPriority @default(MEDIUM)
+  targetValue Float
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  category    Category     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([categoryId])
+  @@map("recurring_goals")
+}
+

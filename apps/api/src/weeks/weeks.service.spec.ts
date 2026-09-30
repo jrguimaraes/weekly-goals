@@ -497,6 +497,7 @@ describe('WeeksService', () => {
       const mockTx = {
         goal: {
           findMany: vi.fn().mockResolvedValue(mockGoals),
+          create: vi.fn(),
         },
         category: {
           findMany: vi.fn().mockResolvedValue(mockCategories),
@@ -505,6 +506,9 @@ describe('WeeksService', () => {
           update: vi.fn().mockResolvedValue(closedWeek),
           findFirst: vi.fn().mockResolvedValue(null),
           create: vi.fn().mockResolvedValue(nextWeek),
+        },
+        recurringGoal: {
+          findMany: vi.fn().mockResolvedValue([]),
         },
       };
 
@@ -608,6 +612,7 @@ describe('WeeksService', () => {
       const mockTx = {
         goal: {
           findMany: vi.fn().mockResolvedValue([]),
+          create: vi.fn(),
         },
         category: {
           findMany: vi.fn().mockResolvedValue([]),
@@ -616,6 +621,9 @@ describe('WeeksService', () => {
           update: vi.fn().mockResolvedValue(closedWeek),
           findFirst: vi.fn().mockResolvedValue(existingNextWeek),
           create: vi.fn(),
+        },
+        recurringGoal: {
+          findMany: vi.fn().mockResolvedValue([]),
         },
       };
 
@@ -661,6 +669,7 @@ describe('WeeksService', () => {
       const mockTx = {
         goal: {
           findMany: vi.fn().mockResolvedValue([]),
+          create: vi.fn(),
         },
         category: {
           findMany: vi.fn().mockResolvedValue([]),
@@ -673,6 +682,9 @@ describe('WeeksService', () => {
           }),
           findFirst: vi.fn().mockResolvedValue(null),
           create: vi.fn().mockResolvedValue(expectedNextDraft),
+        },
+        recurringGoal: {
+          findMany: vi.fn().mockResolvedValue([]),
         },
       };
 
@@ -747,6 +759,211 @@ describe('WeeksService', () => {
       await expect(service.close('week-1')).rejects.toThrow(
         'Erro ao salvar relatório',
       );
+    });
+
+    it('deve gerar metas na próxima semana DRAFT a partir de RecurringGoals ativas', async () => {
+      const closedWeek = { ...activeWeek, status: WeekStatus.CLOSED, closedAt: new Date() };
+      const nextWeek = { id: 'week-next', startDate: new Date('2026-09-14'), endDate: new Date('2026-09-20'), status: WeekStatus.DRAFT };
+
+      const recurringGoal = {
+        id: 'rec-1',
+        categoryId: 'cat-1',
+        title: 'Estudar Anki',
+        description: '30 cards',
+        type: GoalType.QUANTITY,
+        priority: 'HIGH',
+        targetValue: 5,
+        active: true,
+      };
+
+      const mockTx = {
+        goal: {
+          findMany: vi.fn().mockImplementation(({ where }) => {
+            if (where.weekId === 'week-1') return Promise.resolve(mockGoals);
+            if (where.weekId === 'week-next') return Promise.resolve([]);
+            return Promise.resolve([]);
+          }),
+          create: vi.fn().mockResolvedValue({ id: 'goal-generated' }),
+        },
+        category: {
+          findMany: vi.fn().mockResolvedValue(mockCategories),
+        },
+        week: {
+          update: vi.fn().mockResolvedValue(closedWeek),
+          findFirst: vi.fn().mockResolvedValue(null),
+          create: vi.fn().mockResolvedValue(nextWeek),
+        },
+        recurringGoal: {
+          findMany: vi.fn().mockResolvedValue([recurringGoal]),
+        },
+      };
+
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(activeWeek);
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(mockTx));
+      vi.spyOn(reportsService, 'create').mockResolvedValue({} as any);
+
+      await service.close('week-1');
+
+      expect(mockTx.recurringGoal.findMany).toHaveBeenCalledWith({
+        where: {
+          active: true,
+          category: { isActive: true },
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+      expect(mockTx.goal.create).toHaveBeenCalledWith({
+        data: {
+          weekId: 'week-next',
+          categoryId: 'cat-1',
+          title: 'Estudar Anki',
+          description: '30 cards',
+          notes: null,
+          type: GoalType.QUANTITY,
+          priority: 'HIGH',
+          targetValue: 5,
+          currentValue: 0,
+          status: GoalStatus.PENDING,
+          completedAt: null,
+        },
+      });
+    });
+
+    it('não deve gerar meta para RecurringGoal se já existir meta equivalente na próxima semana', async () => {
+      const closedWeek = { ...activeWeek, status: WeekStatus.CLOSED, closedAt: new Date() };
+      const nextWeek = { id: 'week-next', startDate: new Date('2026-09-14'), endDate: new Date('2026-09-20'), status: WeekStatus.DRAFT };
+
+      const recurringGoal = {
+        id: 'rec-1',
+        categoryId: 'cat-1',
+        title: 'Estudar Anki',
+        description: null,
+        type: GoalType.QUANTITY,
+        priority: 'MEDIUM',
+        targetValue: 5,
+        active: true,
+      };
+
+      const mockTx = {
+        goal: {
+          findMany: vi.fn().mockImplementation(({ where }) => {
+            if (where.weekId === 'week-1') return Promise.resolve([]);
+            if (where.weekId === 'week-next') {
+              return Promise.resolve([
+                { categoryId: 'cat-1', title: '  estudar anki  ' },
+              ]);
+            }
+            return Promise.resolve([]);
+          }),
+          create: vi.fn(),
+        },
+        category: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        week: {
+          update: vi.fn().mockResolvedValue(closedWeek),
+          findFirst: vi.fn().mockResolvedValue(nextWeek),
+          create: vi.fn(),
+        },
+        recurringGoal: {
+          findMany: vi.fn().mockResolvedValue([recurringGoal]),
+        },
+      };
+
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(activeWeek);
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(mockTx));
+      vi.spyOn(reportsService, 'create').mockResolvedValue({} as any);
+
+      await service.close('week-1');
+
+      expect(mockTx.goal.create).not.toHaveBeenCalled();
+    });
+
+    it('deve gerar múltiplas metas recorrentes de categorias diferentes na próxima semana', async () => {
+      const closedWeek = { ...activeWeek, status: WeekStatus.CLOSED, closedAt: new Date() };
+      const nextWeek = { id: 'week-next', startDate: new Date('2026-09-14'), endDate: new Date('2026-09-20'), status: WeekStatus.DRAFT };
+
+      const recurringGoals = [
+        {
+          id: 'rec-1',
+          categoryId: 'cat-1',
+          title: 'Anki',
+          description: null,
+          type: GoalType.QUANTITY,
+          priority: 'HIGH',
+          targetValue: 5,
+          active: true,
+        },
+        {
+          id: 'rec-2',
+          categoryId: 'cat-2',
+          title: 'Daily report',
+          description: null,
+          type: GoalType.BINARY,
+          priority: 'MEDIUM',
+          targetValue: 1,
+          active: true,
+        },
+      ];
+
+      const mockTx = {
+        goal: {
+          findMany: vi.fn().mockImplementation(({ where }) => {
+            if (where.weekId === 'week-1') return Promise.resolve([]);
+            if (where.weekId === 'week-next') return Promise.resolve([]);
+            return Promise.resolve([]);
+          }),
+          create: vi.fn().mockResolvedValue({ id: 'new-goal' }),
+        },
+        category: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        week: {
+          update: vi.fn().mockResolvedValue(closedWeek),
+          findFirst: vi.fn().mockResolvedValue(nextWeek),
+          create: vi.fn(),
+        },
+        recurringGoal: {
+          findMany: vi.fn().mockResolvedValue(recurringGoals),
+        },
+      };
+
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(activeWeek);
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(mockTx));
+      vi.spyOn(reportsService, 'create').mockResolvedValue({} as any);
+
+      await service.close('week-1');
+
+      expect(mockTx.goal.create).toHaveBeenCalledTimes(2);
+      expect(mockTx.goal.create).toHaveBeenCalledWith({
+        data: {
+          weekId: 'week-next',
+          categoryId: 'cat-1',
+          title: 'Anki',
+          description: null,
+          notes: null,
+          type: GoalType.QUANTITY,
+          priority: 'HIGH',
+          targetValue: 5,
+          currentValue: 0,
+          status: GoalStatus.PENDING,
+          completedAt: null,
+        },
+      });
+      expect(mockTx.goal.create).toHaveBeenCalledWith({
+        data: {
+          weekId: 'week-next',
+          categoryId: 'cat-2',
+          title: 'Daily report',
+          description: null,
+          notes: null,
+          type: GoalType.BINARY,
+          priority: 'MEDIUM',
+          targetValue: 1,
+          currentValue: 0,
+          status: GoalStatus.PENDING,
+          completedAt: null,
+        },
+      });
     });
   });
 

@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Week, WeekStatus } from '@prisma/client';
+import { GoalStatus, Week, WeekStatus } from '@prisma/client';
 import { MetricsService } from '../metrics/metrics.service.js';
 import { WeekSummaryResponse } from '../metrics/metrics.types.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -248,6 +248,53 @@ export class WeeksService {
             status: WeekStatus.DRAFT,
           },
         });
+      }
+
+      const activeRecurringGoals = await tx.recurringGoal.findMany({
+        where: {
+          active: true,
+          category: { isActive: true },
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (activeRecurringGoals.length > 0) {
+        const existingGoalsInNextWeek = await tx.goal.findMany({
+          where: { weekId: nextWeek.id },
+          select: { title: true, categoryId: true },
+        });
+
+        const isEquivalent = (rec: { title: string; categoryId: string }) => {
+          return existingGoalsInNextWeek.some(
+            (curr) =>
+              curr.categoryId === rec.categoryId &&
+              curr.title.trim().toLowerCase() === rec.title.trim().toLowerCase(),
+          );
+        };
+
+        for (const recurring of activeRecurringGoals) {
+          if (!isEquivalent(recurring)) {
+            await tx.goal.create({
+              data: {
+                weekId: nextWeek.id,
+                categoryId: recurring.categoryId,
+                title: recurring.title,
+                description: recurring.description,
+                notes: null,
+                type: recurring.type,
+                priority: recurring.priority,
+                targetValue: recurring.targetValue,
+                currentValue: 0,
+                status: GoalStatus.PENDING,
+                completedAt: null,
+              },
+            });
+            existingGoalsInNextWeek.push({
+              title: recurring.title,
+              categoryId: recurring.categoryId,
+            });
+          }
+        }
       }
 
       return {

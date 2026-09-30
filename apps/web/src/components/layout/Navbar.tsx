@@ -11,6 +11,7 @@ const navItems = [
   { href: '/', label: 'Início' },
   { href: '/categories', label: 'Categorias' },
   { href: '/weeks', label: 'Planejamento Semanal' },
+  { href: '/recurring-goals', label: 'Metas Recorrentes' },
   { href: '/history', label: 'Histórico' },
 ];
 
