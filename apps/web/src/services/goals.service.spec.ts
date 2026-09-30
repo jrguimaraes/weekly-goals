@@ -194,4 +194,35 @@ describe('goalsService', () => {
       currentValue: 3,
     });
   });
+
+  it('deve buscar metas importáveis da semana anterior via GET /weeks/:weekId/goals/importable', async () => {
+    const mockResponse = {
+      previousWeek: {
+        id: 'w-prev',
+        startDate: '2026-09-22',
+        endDate: '2026-09-28',
+      },
+      goals: [],
+    };
+    vi.mocked(apiClient.get).mockResolvedValue(mockResponse);
+
+    const result = await goalsService.getImportable('w-1');
+
+    expect(result).toEqual(mockResponse);
+    expect(apiClient.get).toHaveBeenCalledWith('/weeks/w-1/goals/importable');
+  });
+
+  it('deve importar metas selecionadas via POST /weeks/:weekId/goals/import', async () => {
+    const mockImported: Goal[] = [];
+    vi.mocked(apiClient.post).mockResolvedValue(mockImported);
+
+    const result = await goalsService.importGoals('w-1', {
+      goalIds: ['g-1', 'g-2'],
+    });
+
+    expect(result).toEqual(mockImported);
+    expect(apiClient.post).toHaveBeenCalledWith('/weeks/w-1/goals/import', {
+      goalIds: ['g-1', 'g-2'],
+    });
+  });
 });

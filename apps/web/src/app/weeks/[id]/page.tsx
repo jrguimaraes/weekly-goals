@@ -11,7 +11,9 @@ import { GoalList } from '../../../components/goals/GoalList';
 import { GoalFormModal } from '../../../components/goals/GoalFormModal';
 import { GoalNotesModal } from '../../../components/goals/GoalNotesModal';
 import { DeleteGoalModal } from '../../../components/goals/DeleteGoalModal';
+import { ImportPreviousGoalsModal } from '../../../components/goals/ImportPreviousGoalsModal';
 import { CloseWeekModal } from '../../../components/weeks/CloseWeekModal';
+
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner';
 import { Alert } from '../../../components/ui/Alert';
 import { getApiErrorMessage } from '../../../lib/api-client';
@@ -41,6 +43,8 @@ export default function WeekGoalsPage() {
   const [deletingGoal, setDeletingGoal] = useState<Goal | null>(null);
   const [notesGoal, setNotesGoal] = useState<Goal | null>(null);
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
 
   const loadData = useCallback(
     async (catId: string, status: string) => {
@@ -183,6 +187,15 @@ export default function WeekGoalsPage() {
     });
   }
 
+  function handleImportSuccess(importedGoals: Goal[]) {
+    setFeedback({
+      message: `${importedGoals.length} meta(s) importada(s) com sucesso da semana anterior!`,
+      variant: 'success',
+    });
+    loadData(selectedCategoryId, selectedStatus);
+  }
+
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-24">
@@ -262,6 +275,27 @@ export default function WeekGoalsPage() {
 
         {!isClosed && (
           <div className="flex flex-wrap items-center gap-3">
+            {week.status === 'DRAFT' && (
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-indigo-700 shadow-xs hover:bg-indigo-50 dark:border-indigo-800 dark:bg-slate-800 dark:text-indigo-300 dark:hover:bg-slate-700 transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 text-indigo-600 dark:text-indigo-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Importar Metas da Semana Anterior
+              </button>
+            )}
             {week.status === 'ACTIVE' && (
               <button
                 type="button"
@@ -405,6 +439,14 @@ export default function WeekGoalsPage() {
         onClose={() => setIsCloseModalOpen(false)}
         week={week}
         onSuccess={handleCloseWeekSuccess}
+      />
+
+      {/* Modal de Importação da Semana Anterior */}
+      <ImportPreviousGoalsModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        weekId={week.id}
+        onSuccess={handleImportSuccess}
       />
     </div>
   );

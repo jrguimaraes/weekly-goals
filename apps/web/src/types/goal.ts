@@ -47,3 +47,33 @@ export interface GoalFilters {
   categoryId?: string;
   status?: GoalStatus;
 }
+
+export interface ImportGoalsInput {
+  goalIds: string[];
+}
+
+export interface ImportableGoalItem {
+  id: string;
+  title: string;
+  description: string | null;
+  type: GoalType;
+  priority: GoalPriority;
+  targetValue: number;
+  categoryId: string;
+  category: {
+    id: string;
+    name: string;
+    isActive: boolean;
+  };
+  isAlreadyPresent: boolean;
+}
+
+export interface ImportableGoalsResponse {
+  previousWeek: {
+    id: string;
+    startDate: string;
+    endDate: string;
+  } | null;
+  goals: ImportableGoalItem[];
+}
+

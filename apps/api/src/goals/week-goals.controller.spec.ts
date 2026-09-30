@@ -17,6 +17,8 @@ describe('WeekGoalsController', () => {
           useValue: {
             create: vi.fn(),
             findByWeekId: vi.fn(),
+            getImportableFromPreviousWeek: vi.fn(),
+            importFromPreviousWeek: vi.fn(),
           },
         },
       ],
@@ -88,6 +90,68 @@ describe('WeekGoalsController', () => {
 
       expect(service.findByWeekId).toHaveBeenCalledWith('week-1', undefined);
       expect(result).toEqual(mockGoals);
+    });
+  });
+
+  describe('getImportableFromPreviousWeek', () => {
+    it('deve delegar a busca de metas importáveis da semana anterior para o GoalsService', async () => {
+      const mockResponse = {
+        previousWeek: {
+          id: 'prev-1',
+          startDate: new Date('2026-09-22'),
+          endDate: new Date('2026-09-28'),
+        },
+        goals: [
+          {
+            id: 'g-1',
+            title: 'Meta 1',
+            description: null,
+            type: GoalType.BINARY,
+            priority: GoalPriority.HIGH,
+            targetValue: 1,
+            categoryId: 'cat-1',
+            category: { id: 'cat-1', name: 'Saúde', isActive: true },
+            isAlreadyPresent: false,
+          },
+        ],
+      };
+
+      vi.spyOn(service, 'getImportableFromPreviousWeek').mockResolvedValue(mockResponse);
+
+      const result = await controller.getImportableFromPreviousWeek('week-1');
+
+      expect(service.getImportableFromPreviousWeek).toHaveBeenCalledWith('week-1');
+      expect(result).toEqual(mockResponse);
+    });
+  });
+
+  describe('importFromPreviousWeek', () => {
+    it('deve delegar a importação de metas da semana anterior para o GoalsService', async () => {
+      const dto = { goalIds: ['g-1'] };
+      const mockImported = [
+        {
+          id: 'new-g1',
+          weekId: 'week-1',
+          categoryId: 'cat-1',
+          title: 'Meta 1',
+          description: null,
+          type: GoalType.BINARY,
+          priority: GoalPriority.HIGH,
+          targetValue: 1,
+          currentValue: 0,
+          status: GoalStatus.PENDING,
+          completedAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      vi.spyOn(service, 'importFromPreviousWeek').mockResolvedValue(mockImported);
+
+      const result = await controller.importFromPreviousWeek('week-1', dto);
+
+      expect(service.importFromPreviousWeek).toHaveBeenCalledWith('week-1', dto);
+      expect(result).toEqual(mockImported);
     });
   });
 });

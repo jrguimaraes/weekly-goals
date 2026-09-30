@@ -13,9 +13,36 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateGoalDto } from './dto/create-goal.dto.js';
+import { ImportGoalsDto } from './dto/import-goals.dto.js';
 import { ListGoalsQueryDto } from './dto/list-goals-query.dto.js';
 import { UpdateGoalProgressDto } from './dto/update-goal-progress.dto.js';
 import { UpdateGoalDto } from './dto/update-goal.dto.js';
+
+export interface ImportableGoalItem {
+  id: string;
+  title: string;
+  description: string | null;
+  type: GoalType;
+  priority: GoalPriority;
+  targetValue: number;
+  categoryId: string;
+  category: {
+    id: string;
+    name: string;
+    isActive: boolean;
+  };
+  isAlreadyPresent: boolean;
+}
+
+export interface ImportableGoalsResponse {
+  previousWeek: {
+    id: string;
+    startDate: Date;
+    endDate: Date;
+  } | null;
+  goals: ImportableGoalItem[];
+}
+
 
 @Injectable()
 export class GoalsService {
@@ -348,6 +375,182 @@ export class GoalsService {
       include: {
         category: true,
       },
+    });
+  }
+
+  async getImportableFromPreviousWeek(
+    weekId: string,
+  ): Promise<ImportableGoalsResponse> {
+    const week = await this.prisma.week.findUnique({
+      where: { id: weekId },
+    });
+
+    if (!week) {
+      throw new NotFoundException(`Semana com id "${weekId}" não encontrada.`);
+    }
+
+    if (week.status !== WeekStatus.DRAFT) {
+      throw new ConflictException(
+        'A importação de metas é permitida apenas para semanas em planejamento (DRAFT).',
+      );
+    }
+
+    const previousWeek = await this.prisma.week.findFirst({
+      where: {
+        startDate: { lt: week.startDate },
+      },
+      orderBy: { startDate: 'desc' },
+    });
+
+    if (!previousWeek) {
+      return {
+        previousWeek: null,
+        goals: [],
+      };
+    }
+
+    const previousGoals = await this.prisma.goal.findMany({
+      where: { weekId: previousWeek.id },
+      include: { category: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const currentGoals = await this.prisma.goal.findMany({
+      where: { weekId },
+      select: { title: true, categoryId: true },
+    });
+
+    const isEquivalent = (prevGoal: { title: string; categoryId: string }) => {
+      return currentGoals.some(
+        (curr) =>
+          curr.categoryId === prevGoal.categoryId &&
+          curr.title.trim().toLowerCase() === prevGoal.title.trim().toLowerCase(),
+      );
+    };
+
+    const goals: ImportableGoalItem[] = previousGoals.map((g) => ({
+      id: g.id,
+      title: g.title,
+      description: g.description,
+      type: g.type,
+      priority: g.priority,
+      targetValue: g.targetValue,
+      categoryId: g.categoryId,
+      category: {
+        id: g.category.id,
+        name: g.category.name,
+        isActive: g.category.isActive,
+      },
+      isAlreadyPresent: isEquivalent(g),
+    }));
+
+    return {
+      previousWeek: {
+        id: previousWeek.id,
+        startDate: previousWeek.startDate,
+        endDate: previousWeek.endDate,
+      },
+      goals,
+    };
+  }
+
+  async importFromPreviousWeek(
+    weekId: string,
+    dto: ImportGoalsDto,
+  ): Promise<Goal[]> {
+    const week = await this.prisma.week.findUnique({
+      where: { id: weekId },
+    });
+
+    if (!week) {
+      throw new NotFoundException(`Semana com id "${weekId}" não encontrada.`);
+    }
+
+    if (week.status !== WeekStatus.DRAFT) {
+      throw new ConflictException(
+        'A importação de metas é permitida apenas para semanas em planejamento (DRAFT).',
+      );
+    }
+
+    const previousWeek = await this.prisma.week.findFirst({
+      where: {
+        startDate: { lt: week.startDate },
+      },
+      orderBy: { startDate: 'desc' },
+    });
+
+    if (!previousWeek) {
+      throw new BadRequestException(
+        'Nenhuma semana anterior encontrada para importar metas.',
+      );
+    }
+
+    const sourceGoals = await this.prisma.goal.findMany({
+      where: {
+        id: { in: dto.goalIds },
+        weekId: previousWeek.id,
+      },
+      include: { category: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (sourceGoals.length === 0) {
+      throw new NotFoundException(
+        'Nenhuma meta válida encontrada para importação na semana anterior.',
+      );
+    }
+
+    const currentGoals = await this.prisma.goal.findMany({
+      where: { weekId },
+      select: { title: true, categoryId: true },
+    });
+
+    const isEquivalent = (prevGoal: { title: string; categoryId: string }) => {
+      return currentGoals.some(
+        (curr) =>
+          curr.categoryId === prevGoal.categoryId &&
+          curr.title.trim().toLowerCase() === prevGoal.title.trim().toLowerCase(),
+      );
+    };
+
+    const goalsToImport = sourceGoals.filter((g) => !isEquivalent(g));
+
+    if (goalsToImport.length === 0) {
+      return [];
+    }
+
+    for (const g of goalsToImport) {
+      if (!g.category.isActive) {
+        throw new BadRequestException(
+          `A categoria "${g.category.name}" da meta "${g.title}" está inativa.`,
+        );
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const createdGoals: Goal[] = [];
+      for (const source of goalsToImport) {
+        const created = await tx.goal.create({
+          data: {
+            weekId,
+            categoryId: source.categoryId,
+            title: source.title,
+            description: source.description,
+            notes: null,
+            type: source.type,
+            priority: source.priority,
+            targetValue: source.targetValue,
+            currentValue: 0,
+            status: GoalStatus.PENDING,
+            completedAt: null,
+          },
+          include: {
+            category: true,
+          },
+        });
+        createdGoals.push(created);
+      }
+      return createdGoals;
     });
   }
 }

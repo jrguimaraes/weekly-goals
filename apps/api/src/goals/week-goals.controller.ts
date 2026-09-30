@@ -2,8 +2,9 @@ import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Goal } from '@prisma/client';
 import { CreateGoalDto } from './dto/create-goal.dto.js';
+import { ImportGoalsDto } from './dto/import-goals.dto.js';
 import { ListGoalsQueryDto } from './dto/list-goals-query.dto.js';
-import { GoalsService } from './goals.service.js';
+import { GoalsService, ImportableGoalsResponse } from './goals.service.js';
 
 @ApiTags('Goals')
 @Controller('weeks/:weekId/goals')
@@ -32,6 +33,34 @@ export class WeekGoalsController {
     @Query() query?: ListGoalsQueryDto,
   ): Promise<Goal[]> {
     return this.goalsService.findByWeekId(weekId, query);
+  }
+
+  @Get('importable')
+  @ApiOperation({
+    summary: 'Lista metas da semana anterior disponíveis para importação em uma semana DRAFT',
+  })
+  @ApiResponse({ status: 200, description: 'Metas da semana anterior listadas com sucesso' })
+  @ApiResponse({ status: 404, description: 'Semana não encontrada' })
+  @ApiResponse({ status: 409, description: 'Importação permitida apenas para semanas em DRAFT' })
+  async getImportableFromPreviousWeek(
+    @Param('weekId') weekId: string,
+  ): Promise<ImportableGoalsResponse> {
+    return this.goalsService.getImportableFromPreviousWeek(weekId);
+  }
+
+  @Post('import')
+  @ApiOperation({
+    summary: 'Importa metas selecionadas da semana anterior para a semana atual em DRAFT',
+  })
+  @ApiResponse({ status: 201, description: 'Metas importadas com sucesso' })
+  @ApiResponse({ status: 400, description: 'Payload inválido ou categoria inativa' })
+  @ApiResponse({ status: 404, description: 'Semana ou metas não encontradas' })
+  @ApiResponse({ status: 409, description: 'Importação permitida apenas para semanas em DRAFT' })
+  async importFromPreviousWeek(
+    @Param('weekId') weekId: string,
+    @Body() dto: ImportGoalsDto,
+  ): Promise<Goal[]> {
+    return this.goalsService.importFromPreviousWeek(weekId, dto);
   }
 }
 

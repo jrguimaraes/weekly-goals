@@ -34,11 +34,14 @@ describe('GoalsService', () => {
             },
             week: {
               findUnique: vi.fn(),
+              findFirst: vi.fn(),
             },
             category: {
               findUnique: vi.fn(),
             },
+            $transaction: vi.fn(),
           },
+
         },
       ],
     }).compile();
@@ -1157,4 +1160,402 @@ describe('GoalsService', () => {
       ).rejects.toThrow(NotFoundException);
     });
   });
+
+  describe('getImportableFromPreviousWeek', () => {
+    const draftWeek = {
+      id: 'week-current',
+      startDate: new Date('2026-09-29T00:00:00.000Z'),
+      endDate: new Date('2026-10-05T00:00:00.000Z'),
+      status: WeekStatus.DRAFT,
+      closedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const previousWeek = {
+      id: 'week-prev',
+      startDate: new Date('2026-09-22T00:00:00.000Z'),
+      endDate: new Date('2026-09-28T00:00:00.000Z'),
+      status: WeekStatus.CLOSED,
+      closedAt: new Date('2026-09-28T23:59:59.000Z'),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const catIngles = { id: 'cat-ingles', name: 'Inglês', isActive: true };
+    const catSaude = { id: 'cat-saude', name: 'Saúde', isActive: true };
+
+    const prevGoal1 = {
+      id: 'goal-prev-1',
+      weekId: 'week-prev',
+      categoryId: 'cat-ingles',
+      title: 'Anki',
+      description: 'Revisar vocabulário',
+      notes: 'Fiz todos os dias com sucesso',
+      type: GoalType.QUANTITY,
+      priority: GoalPriority.HIGH,
+      targetValue: 3,
+      currentValue: 3,
+      status: GoalStatus.COMPLETED,
+      completedAt: new Date(),
+      category: catIngles,
+    };
+
+    const prevGoal2 = {
+      id: 'goal-prev-2',
+      weekId: 'week-prev',
+      categoryId: 'cat-saude',
+      title: 'Exercício físico',
+      description: null,
+      notes: null,
+      type: GoalType.QUANTITY,
+      priority: GoalPriority.MEDIUM,
+      targetValue: 5,
+      currentValue: 2,
+      status: GoalStatus.IN_PROGRESS,
+      completedAt: null,
+      category: catSaude,
+    };
+
+    it('deve listar metas da semana anterior com identificação de duplicidades existentes na semana atual', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek);
+      vi.spyOn(prismaService.week, 'findFirst').mockResolvedValue(previousWeek);
+      vi.spyOn(prismaService.goal, 'findMany')
+        .mockResolvedValueOnce([prevGoal1, prevGoal2] as any) // metas da semana anterior
+        .mockResolvedValueOnce([{ title: 'anki', categoryId: 'cat-ingles' }] as any); // metas atuais
+
+      const result = await service.getImportableFromPreviousWeek('week-current');
+
+      expect(result.previousWeek).toEqual({
+        id: 'week-prev',
+        startDate: previousWeek.startDate,
+        endDate: previousWeek.endDate,
+      });
+      expect(result.goals).toHaveLength(2);
+
+      // Meta 'Anki' já existe na semana (mesma categoria e título case-insensitive)
+      const ankiItem = result.goals.find((g) => g.id === 'goal-prev-1');
+      expect(ankiItem?.isAlreadyPresent).toBe(true);
+
+      // Meta 'Exercício físico' não existe na semana
+      const exItem = result.goals.find((g) => g.id === 'goal-prev-2');
+      expect(exItem?.isAlreadyPresent).toBe(false);
+    });
+
+    it('deve retornar previousWeek null e lista vazia caso não exista semana anterior', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek);
+      vi.spyOn(prismaService.week, 'findFirst').mockResolvedValue(null);
+
+      const result = await service.getImportableFromPreviousWeek('week-current');
+
+      expect(result.previousWeek).toBeNull();
+      expect(result.goals).toEqual([]);
+    });
+
+    it('deve retornar previousWeek com lista vazia caso a semana anterior não possua metas', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek);
+      vi.spyOn(prismaService.week, 'findFirst').mockResolvedValue(previousWeek);
+      vi.spyOn(prismaService.goal, 'findMany')
+        .mockResolvedValueOnce([]) // sem metas na semana anterior
+        .mockResolvedValueOnce([]);
+
+      const result = await service.getImportableFromPreviousWeek('week-current');
+
+      expect(result.previousWeek?.id).toBe('week-prev');
+      expect(result.goals).toEqual([]);
+    });
+
+    it('deve impedir consulta se a semana não for encontrada', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(null);
+
+      await expect(
+        service.getImportableFromPreviousWeek('inexistente'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('deve impedir consulta em semana com status ACTIVE com ConflictException', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue({
+        ...draftWeek,
+        status: WeekStatus.ACTIVE,
+      });
+
+      await expect(
+        service.getImportableFromPreviousWeek('week-current'),
+      ).rejects.toThrow(
+        new ConflictException(
+          'A importação de metas é permitida apenas para semanas em planejamento (DRAFT).',
+        ),
+      );
+    });
+
+    it('deve impedir consulta em semana com status CLOSED com ConflictException', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue({
+        ...draftWeek,
+        status: WeekStatus.CLOSED,
+      });
+
+      await expect(
+        service.getImportableFromPreviousWeek('week-current'),
+      ).rejects.toThrow(
+        new ConflictException(
+          'A importação de metas é permitida apenas para semanas em planejamento (DRAFT).',
+        ),
+      );
+    });
+  });
+
+  describe('importFromPreviousWeek', () => {
+    const draftWeek = {
+      id: 'week-current',
+      startDate: new Date('2026-09-29T00:00:00.000Z'),
+      endDate: new Date('2026-10-05T00:00:00.000Z'),
+      status: WeekStatus.DRAFT,
+      closedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const previousWeek = {
+      id: 'week-prev',
+      startDate: new Date('2026-09-22T00:00:00.000Z'),
+      endDate: new Date('2026-09-28T00:00:00.000Z'),
+      status: WeekStatus.CLOSED,
+      closedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const catIngles = { id: 'cat-ingles', name: 'Inglês', isActive: true };
+    const catSaude = { id: 'cat-saude', name: 'Saúde', isActive: true };
+
+    const prevGoal1 = {
+      id: 'goal-prev-1',
+      weekId: 'week-prev',
+      categoryId: 'cat-ingles',
+      title: 'Anki',
+      description: 'Revisar vocabulário',
+      notes: 'Observações que não devem ser copiadas',
+      type: GoalType.QUANTITY,
+      priority: GoalPriority.HIGH,
+      targetValue: 3,
+      currentValue: 3,
+      status: GoalStatus.COMPLETED,
+      completedAt: new Date('2026-09-25T10:00:00.000Z'),
+      category: catIngles,
+    };
+
+    const prevGoal2 = {
+      id: 'goal-prev-2',
+      weekId: 'week-prev',
+      categoryId: 'cat-saude',
+      title: 'Exercício físico',
+      description: 'Academia ou corrida',
+      notes: 'Contexto anterior',
+      type: GoalType.BINARY,
+      priority: GoalPriority.MEDIUM,
+      targetValue: 1,
+      currentValue: 1,
+      status: GoalStatus.COMPLETED,
+      completedAt: new Date('2026-09-26T10:00:00.000Z'),
+      category: catSaude,
+    };
+
+    it('deve importar uma meta com sucesso, resetando progresso/status e limpando notas/contexto', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek);
+      vi.spyOn(prismaService.week, 'findFirst').mockResolvedValue(previousWeek);
+      vi.spyOn(prismaService.goal, 'findMany')
+        .mockResolvedValueOnce([prevGoal1] as any) // sourceGoals
+        .mockResolvedValueOnce([]); // currentGoals (sem duplicatas)
+
+      const createdGoal = {
+        id: 'new-goal-1',
+        weekId: 'week-current',
+        categoryId: 'cat-ingles',
+        title: 'Anki',
+        description: 'Revisar vocabulário',
+        notes: null,
+        type: GoalType.QUANTITY,
+        priority: GoalPriority.HIGH,
+        targetValue: 3,
+        currentValue: 0,
+        status: GoalStatus.PENDING,
+        completedAt: null,
+        category: catIngles,
+      };
+
+      const mockTx = {
+        goal: {
+          create: vi.fn().mockResolvedValue(createdGoal),
+        },
+      };
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(mockTx));
+
+      const result = await service.importFromPreviousWeek('week-current', {
+        goalIds: ['goal-prev-1'],
+      });
+
+      expect(mockTx.goal.create).toHaveBeenCalledWith({
+        data: {
+          weekId: 'week-current',
+          categoryId: 'cat-ingles',
+          title: 'Anki',
+          description: 'Revisar vocabulário',
+          notes: null, // Contexto não foi copiado!
+          type: GoalType.QUANTITY,
+          priority: GoalPriority.HIGH,
+          targetValue: 3,
+          currentValue: 0, // Resetado!
+          status: GoalStatus.PENDING, // Resetado!
+          completedAt: null, // Resetado!
+        },
+        include: {
+          category: true,
+        },
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].currentValue).toBe(0);
+      expect(result[0].status).toBe(GoalStatus.PENDING);
+      expect(result[0].completedAt).toBeNull();
+      expect(result[0].notes).toBeNull();
+    });
+
+    it('deve importar múltiplas metas de uma vez na mesma transação', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek);
+      vi.spyOn(prismaService.week, 'findFirst').mockResolvedValue(previousWeek);
+      vi.spyOn(prismaService.goal, 'findMany')
+        .mockResolvedValueOnce([prevGoal1, prevGoal2] as any)
+        .mockResolvedValueOnce([]);
+
+      const mockTx = {
+        goal: {
+          create: vi
+            .fn()
+            .mockResolvedValueOnce({ ...prevGoal1, id: 'g1', currentValue: 0, status: GoalStatus.PENDING, notes: null })
+            .mockResolvedValueOnce({ ...prevGoal2, id: 'g2', currentValue: 0, status: GoalStatus.PENDING, notes: null }),
+        },
+      };
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(mockTx));
+
+      const result = await service.importFromPreviousWeek('week-current', {
+        goalIds: ['goal-prev-1', 'goal-prev-2'],
+      });
+
+      expect(result).toHaveLength(2);
+      expect(mockTx.goal.create).toHaveBeenCalledTimes(2);
+    });
+
+    it('deve evitar duplicidade ao importar, ignorando metas que já existem na semana atual', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek);
+      vi.spyOn(prismaService.week, 'findFirst').mockResolvedValue(previousWeek);
+      vi.spyOn(prismaService.goal, 'findMany')
+        .mockResolvedValueOnce([prevGoal1, prevGoal2] as any) // selecionou ambas
+        .mockResolvedValueOnce([{ title: 'Anki', categoryId: 'cat-ingles' }] as any); // mas 'Anki' já existe
+
+      const mockTx = {
+        goal: {
+          create: vi.fn().mockResolvedValue({
+            ...prevGoal2,
+            id: 'new-g2',
+            currentValue: 0,
+            status: GoalStatus.PENDING,
+            notes: null,
+          }),
+        },
+      };
+      vi.spyOn(prismaService, '$transaction').mockImplementation(async (cb: any) => cb(mockTx));
+
+      const result = await service.importFromPreviousWeek('week-current', {
+        goalIds: ['goal-prev-1', 'goal-prev-2'],
+      });
+
+      // Apenas a meta não duplicada foi importada
+      expect(mockTx.goal.create).toHaveBeenCalledTimes(1);
+      expect(mockTx.goal.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: 'Exercício físico',
+            categoryId: 'cat-saude',
+          }),
+        }),
+      );
+      expect(result).toHaveLength(1);
+    });
+
+    it('deve retornar array vazio se todas as metas selecionadas já existirem na semana atual', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek);
+      vi.spyOn(prismaService.week, 'findFirst').mockResolvedValue(previousWeek);
+      vi.spyOn(prismaService.goal, 'findMany')
+        .mockResolvedValueOnce([prevGoal1] as any)
+        .mockResolvedValueOnce([{ title: 'Anki', categoryId: 'cat-ingles' }] as any);
+
+      const result = await service.importFromPreviousWeek('week-current', {
+        goalIds: ['goal-prev-1'],
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    it('deve rejeitar importação se a semana atual estiver com status ACTIVE', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue({
+        ...draftWeek,
+        status: WeekStatus.ACTIVE,
+      });
+
+      await expect(
+        service.importFromPreviousWeek('week-current', { goalIds: ['goal-1'] }),
+      ).rejects.toThrow(
+        new ConflictException(
+          'A importação de metas é permitida apenas para semanas em planejamento (DRAFT).',
+        ),
+      );
+    });
+
+    it('deve rejeitar importação se a semana atual estiver com status CLOSED', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue({
+        ...draftWeek,
+        status: WeekStatus.CLOSED,
+      });
+
+      await expect(
+        service.importFromPreviousWeek('week-current', { goalIds: ['goal-1'] }),
+      ).rejects.toThrow(
+        new ConflictException(
+          'A importação de metas é permitida apenas para semanas em planejamento (DRAFT).',
+        ),
+      );
+    });
+
+    it('deve lançar BadRequestException se não houver semana anterior cadastrada', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek);
+      vi.spyOn(prismaService.week, 'findFirst').mockResolvedValue(null);
+
+      await expect(
+        service.importFromPreviousWeek('week-current', { goalIds: ['goal-1'] }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve lançar NotFoundException se os IDs informados não pertencerem à semana anterior', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek);
+      vi.spyOn(prismaService.week, 'findFirst').mockResolvedValue(previousWeek);
+      vi.spyOn(prismaService.goal, 'findMany').mockResolvedValueOnce([]); // nenhum encontrado
+
+      await expect(
+        service.importFromPreviousWeek('week-current', { goalIds: ['id-invalido'] }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('deve lançar BadRequestException se a categoria da meta importada foi desativada', async () => {
+      vi.spyOn(prismaService.week, 'findUnique').mockResolvedValue(draftWeek);
+      vi.spyOn(prismaService.week, 'findFirst').mockResolvedValue(previousWeek);
+      vi.spyOn(prismaService.goal, 'findMany')
+        .mockResolvedValueOnce([{ ...prevGoal1, category: { ...catIngles, isActive: false } }] as any)
+        .mockResolvedValueOnce([]);
+
+      await expect(
+        service.importFromPreviousWeek('week-current', { goalIds: ['goal-prev-1'] }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
 });
+

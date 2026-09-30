@@ -4,6 +4,8 @@ import type {
   CreateGoalInput,
   UpdateGoalInput,
   GoalFilters,
+  ImportGoalsInput,
+  ImportableGoalsResponse,
 } from '../types/goal';
 
 export const goalsService = {
@@ -35,5 +37,13 @@ export const goalsService = {
 
   async updateProgress(id: string, currentValue: number): Promise<Goal> {
     return apiClient.patch<Goal>(`/goals/${id}/progress`, { currentValue });
+  },
+
+  async getImportable(weekId: string): Promise<ImportableGoalsResponse> {
+    return apiClient.get<ImportableGoalsResponse>(`/weeks/${weekId}/goals/importable`);
+  },
+
+  async importGoals(weekId: string, data: ImportGoalsInput): Promise<Goal[]> {
+    return apiClient.post<Goal[]>(`/weeks/${weekId}/goals/import`, data);
   },
 };
